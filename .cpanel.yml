@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - /bin/mkdir -p /home/rendermultimedia/public_html/wp-content/mu-plugins
+    - /usr/bin/install -m 0644 render-menu-uppercase.php /home/rendermultimedia/public_html/wp-content/mu-plugins/render-menu-uppercase.php
