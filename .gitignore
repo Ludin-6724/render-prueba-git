@@ -1,0 +1,31 @@
+# Secretos y configuración privada
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.secrets/
+
+# Insumos privados, originales y copia local completa de WordPress
+/insumos/
+/backups/
+/sitio-local/
+/private/
+/tmp/
+*.sql
+*.sql.gz
+*.sql.zip
+wp-config.php
+auth.json
+.npmrc
+
+# Datos de ejecución y dependencias
+*.log
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.DS_Store
+
+# Versionar explícitamente el código propio en una carpeta src/ cuando se cree.
+# No ejecutar git add -f sobre secretos o respaldos.
