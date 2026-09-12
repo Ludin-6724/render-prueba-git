@@ -115,3 +115,18 @@ cámara sin video descrita arriba.
 La entrega conserva las versiones públicas anteriores para reversión por Git.
 Los archivos locales experimentales `blackmagic-rig.*`, `verify.tmp.mjs` y los
 cambios previos de dependencias no forman parte de esta publicación.
+
+### Publicación de la actualización 360
+
+- Código: `a454df74b9b7754d1747a4003d4fa5617e2c1e8d`.
+- Entrega: `aadb8da1355574ba4b554384aed1e4023b454dd8`, GitHub `main`.
+- cPanel: despliegue 5, estado `succeeded`; caché NGINX limpiada después.
+- 38 verificaciones HTTP (31 archivos y siete rutas) devuelven 200 y SHA-256
+  idéntico al build. Los 20 PNG coinciden también con sus originales de Descargas.
+  Evidencia: `private/local-evidence/360-public-check.json`.
+- Navegador público: 20 componentes y video listos, JS `index-DEvm4QGK.js`,
+  giro comprobado a 3,323 s y retroceso a 1,720 s. El slider pasó de 01 a 03
+  automáticamente; dar play cargó el video de YouTube y detuvo ambos carruseles.
+- En móvil público (390 × 844), cámara completa cargada, fondo limpio y ancho
+  del documento de 390 px. El video permaneció en el proyecto 03 durante la
+  prueba de bloqueo; cambiar de proyecto retiró el reproductor.
