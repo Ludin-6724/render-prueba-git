@@ -164,3 +164,16 @@ armado a tiempo 0, final del recorrido a 10 s/frame 240 y continuación hacia el
 contenido. Título con opacidad 1, sin solapamiento con el escenario. En móvil de
 390 px el documento mide 390 px; título termina a 190,5 px y escena empieza a
 225 px. Las capturas muestran texto legible y piezas dentro del encuadre.
+
+### Publicación del hero blanco
+
+- Código: `5face126830b4cc6fd2541f94366140bf67d0947`.
+- Entrega: `8fce8417762c1952f3caf60142aea406c865d3c5`, GitHub `main`.
+- cPanel: despliegue 6, estado `succeeded`; caché NGINX limpiada después.
+- 18 verificaciones HTTP (11 archivos y siete rutas) correctas, con archivos
+  idénticos al build por SHA-256. Evidencia:
+  `private/local-evidence/white-public-check.json`.
+- Navegador público: nuevo video blanco cargado, fondo RGB 253 y título opaco.
+  Inicio verificado en frame 0/tiempo 0. Durante el giro, scroll de 458,5 px,
+  frame 67 y tiempo 2,777104 s; RENDER Multimedia conserva opacidad 1 y queda
+  separado de la cámara. Captura pública revisada a 1027 × 917 px.
