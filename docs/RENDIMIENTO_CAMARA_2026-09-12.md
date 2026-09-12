@@ -14,7 +14,7 @@ aportado, con cámara armada al principio y al final.
   un punto anterior ([FFmpeg](https://www.ffmpeg.org/ffmpeg.html)). Es una fuente
   de trabajo repetido que aumenta con la distancia al fotograma clave.
 - **Medido en este ordenador:** doce saltos alternados, esperando
-  `requestVideoFrameCallback`, dieron mediana de 44,3 ms y máximo de 77,7 ms.
+  `requestVideoFrameCallback`, dieron mediana de 39,85 ms y máximo de 77,7 ms.
   El evento `seeked` solo resultó engañosamente rápido; se descartó como medida
   de presentación visual. La prueba se hizo en navegador local con material
   precargado: no representa el rendimiento de un teléfono físico ni de su red.
@@ -55,7 +55,7 @@ aportado, con cámara armada al principio y al final.
 
 - Misma prueba local de doce saltos con la nueva secuencia móvil: mediana
   16,7 ms, máximo 19,6 ms. Se espera un frame de presentación después del dibujo.
-  Mediana un 62 % menor; resultado controlado, no una promesa de FPS en dispositivos.
+  Mediana un 58 % menor; resultado controlado, no una promesa de FPS en dispositivos.
 - Tres pruebas del cargador pasan: objetivo más reciente y retroceso, límites
   de solicitudes/memoria y limpieza, pausa fuera de vista, fallback de fallos.
 - TypeScript/Vite, ESLint de los dos módulos tocados, diff sin errores y detector
@@ -72,3 +72,18 @@ aportado, con cámara armada al principio y al final.
   [Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md).
 
 Evidencia de medición y publicación: `private/local-evidence/camera-perf-*.json`.
+
+## Publicación verificada
+
+- Código: `c2f1d062524d356f29a0346966144348440fe92b`.
+- Artefacto: `99e8858b41b453d930e3c2d7d4ea4b47eb074dad` en GitHub `main`.
+- cPanel: despliegue 7 `succeeded`; caché NGINX limpiada correctamente.
+- 259 comprobaciones HTTP correctas: 252 archivos publicados y siete rutas.
+  Todos los contenidos coinciden por SHA-256 con el build local.
+- Navegador público: script `index-Cy61fF5s.js`, sin elemento video en el hero.
+  Escritorio: target/rendered 40 a scroll 367 px; título con opacidad 1.
+  Móvil 390 px: target/rendered 53 a scroll 337,5 px, variante móvil lista,
+  documento de 390 px y título con opacidad 1. Se restauró el tamaño del navegador.
+- Las dependencias y archivos experimentales previos no forman parte del commit
+  ni del artefacto publicado. La versión anterior permanece disponible en Git
+  para reversión.
