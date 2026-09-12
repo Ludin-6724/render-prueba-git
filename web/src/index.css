@@ -359,3 +359,30 @@ section[id] { scroll-margin-top: 6rem; }
   .char-reveal span { opacity: 1; transform: none; }
   .cursor-dot, .cursor-ring { display: none; }
 }
+
+/* The supplied 360 film and its segmented studio view share one photographic stage. */
+.camera-story-360 { height: 340svh; background: #171a19; color: var(--cream); }
+.camera-story-360 .camera-stage { background: #171a19; }
+.camera-story-360 .camera-scene { inset: 135px 0 100px; mask-image: linear-gradient(transparent, #000 7%, #000 93%, transparent); }
+.camera-story-360 .camera-canvas { position: absolute; inset: 0; opacity: 1; }
+.camera-video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.camera-story-360 .camera-chapter-detail { color: #c7c0b8; }
+.camera-story-360 .camera-skip { border-color: #c7c0b8; }
+.camera-story-360 .camera-progress { background: #373b39; }
+.camera-story-360 .camera-progress > div { background: var(--amber); }
+.camera-story-360 :focus-visible { outline-color: var(--amber); }
+.autoplay-control { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 44px; font-size: var(--type-meta); font-weight: 500; white-space: nowrap; text-underline-offset: 4px; }
+.autoplay-control:hover { text-decoration: underline; }
+.autoplay-control:disabled { opacity: .65; cursor: default; text-decoration: none; }
+.work-controls .autoplay-control { width: 100%; }
+@media (max-width: 767px) {
+  .camera-story-360 { height: 300svh; }
+  .camera-story-360 .camera-scene { inset: 185px -18% 160px; }
+  .work-controls { flex-wrap: wrap; }
+  .work-controls .autoplay-control { width: auto; margin-right: auto; }
+  .work-controls .work-counter { width: auto; }
+  .testimonials-controls { gap: 1rem; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .camera-story-360 { height: auto; }
+}

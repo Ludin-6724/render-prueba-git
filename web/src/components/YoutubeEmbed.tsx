@@ -3,9 +3,10 @@ import { useState } from 'react'
 type Props = {
   id: string
   title: string
+  onPlay?: () => void
 }
 
-export default function YoutubeEmbed({ id, title }: Props) {
+export default function YoutubeEmbed({ id, title, onPlay }: Props) {
   const [play, setPlay] = useState(false)
   const poster = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
 
@@ -13,7 +14,7 @@ export default function YoutubeEmbed({ id, title }: Props) {
     return (
       <button
         type="button"
-        onClick={() => setPlay(true)}
+        onClick={() => { onPlay?.(); setPlay(true) }}
         className="group relative block aspect-video w-full overflow-hidden bg-[#111] text-left"
         aria-label={`Reproducir ${title}`}
       >

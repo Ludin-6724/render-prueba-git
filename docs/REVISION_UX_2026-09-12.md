@@ -26,7 +26,7 @@ Dos evaluaciones independientes de diseño y técnica precedieron los cambios.
 - Los testimonios conservan el texto y ganan una jerarquía más tranquila,
   controles de 48 px y cita legible. Se retiran las cintas repetidas del Inicio.
 
-## Cámara: material y comportamiento
+## Primera versión de cámara: material y comportamiento (sustituida)
 
 La carpeta `segments` contiene una vista completa y recortes, no una secuencia
 multiángulo. Ludin confirmó el despiece con acercamientos. Se copiaron seis PNG
@@ -68,7 +68,7 @@ por las imágenes aportadas: vista de 864 × 679 y recortes de menor tamaño.
 
 Criterios de revisión: [Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md).
 
-## Publicación confirmada
+## Primera publicación confirmada
 
 - Código local: `a78a5442855da906b0fe759049a2f8ef86000797`.
 - Entrega GitHub: `1ce68198e850c24fac31da835f7dfeec879d5d9d` en
@@ -81,3 +81,37 @@ Criterios de revisión: [Web Interface Guidelines](https://raw.githubusercontent
   documento 390 px en viewport de 390 px.
 - Se mantienen los artefactos anteriores para facilitar la reversión por Git.
   No se incluyeron los MP4 experimentales locales en esta publicación.
+
+## Actualización: cámara 360 y avance automático
+
+Petición posterior de Ludin: usar su «Video 360.mp4», todos los componentes de
+`segments`, desarmar y volver a armar con scroll, y sliders automáticos que se
+detengan al reproducir. Esta actualización sustituye la primera versión de
+cámara sin video descrita arriba.
+
+- Los 20 PNG se copian íntegros, con sus rutas originales, a
+  `web/public/assets/camera/segments/`. La composición usa 17 recortes, una base,
+  la cámara completa y la máscara de espacio negativo. Los recortes anidados
+  se sustraen de sus padres antes de moverlos.
+- El primer 22% del scroll abre y cierra las piezas; después se funde con el
+  video aportado, que ya contiene el giro, despiece y montaje. El desplazamiento
+  controla su tiempo en ambos sentidos, hasta los 10 segundos finales.
+- El original VP9/Opus se convierte a H.264 1280 × 720, 24 fps, sin audio,
+  keyframes cada seis cuadros y faststart: 5.408.984 bytes. El original de
+  Descargas se conserva intacto. El inicio usa un escenario oscuro para integrar
+  la fotografía; se mantiene el ritmo de espacios del resto de la web.
+- ONG y Comercial avanzan cada 6,5 segundos. Dar play bloquea ambos; elegir otro
+  proyecto desmonta el iframe y libera la rotación. Testimonios usa 10 segundos.
+  Cada carrusel tiene pausa manual y se detiene fuera de vista, con foco, hover,
+  pestaña oculta o preferencia de movimiento reducido.
+- Verificado en navegador: avance automático, bloqueo estable al reproducir y
+  reanudación al cambiar de proyecto. Cámara con 20 componentes cargados y video
+  llegando a 10 s/frame de control 300; captura del giro y del montaje final.
+  Se revisan escritorio 1440 × 900 y móvil 390 × 844 sin desbordamiento horizontal.
+- TypeScript/Vite y ESLint de los archivos modificados pasan. El detector de
+  diseño no reporta hallazgos. Continúan los ocho errores de lint anteriores en
+  componentes UI ajenos al cambio.
+
+La entrega conserva las versiones públicas anteriores para reversión por Git.
+Los archivos locales experimentales `blackmagic-rig.*`, `verify.tmp.mjs` y los
+cambios previos de dependencias no forman parte de esta publicación.

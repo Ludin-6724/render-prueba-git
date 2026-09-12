@@ -1,0 +1,155 @@
+[
+  {
+    "file": "baseplate.png",
+    "x": 237,
+    "y": 616,
+    "width": 317,
+    "height": 62,
+    "dx": 0,
+    "dy": 100
+  },
+  {
+    "file": "black-background/black-background-2.png",
+    "x": 481,
+    "y": 22,
+    "width": 139,
+    "height": 136,
+    "dx": 32,
+    "dy": -118
+  },
+  {
+    "file": "cables/cables-1.png",
+    "x": 188,
+    "y": 495,
+    "width": 140,
+    "height": 27,
+    "dx": -40,
+    "dy": 70
+  },
+  {
+    "file": "cables/cables-2.png",
+    "x": 424,
+    "y": 165,
+    "width": 57,
+    "height": 165,
+    "dx": 0,
+    "dy": -55
+  },
+  {
+    "file": "camera-body/camera-body-1.png",
+    "x": 471,
+    "y": 1,
+    "width": 261,
+    "height": 188,
+    "dx": 30,
+    "dy": -100
+  },
+  {
+    "file": "camera-body/camera-body-3.png",
+    "x": 225,
+    "y": 264,
+    "width": 639,
+    "height": 290,
+    "dx": 25,
+    "dy": 4
+  },
+  {
+    "file": "camera-body/camera-body-4.png",
+    "x": 228,
+    "y": 335,
+    "width": 265,
+    "height": 202,
+    "dx": -40,
+    "dy": 5
+  },
+  {
+    "file": "camera-body/camera-body-5.png",
+    "x": 4,
+    "y": 270,
+    "width": 245,
+    "height": 275,
+    "dx": -135,
+    "dy": 12
+  },
+  {
+    "file": "label/label-1.png",
+    "x": 11,
+    "y": 294,
+    "width": 83,
+    "height": 170,
+    "dx": -145,
+    "dy": 12
+  },
+  {
+    "file": "label/label-2.png",
+    "x": 683,
+    "y": 422,
+    "width": 25,
+    "height": 26,
+    "dx": 170,
+    "dy": 10
+  },
+  {
+    "file": "lens.png",
+    "x": 549,
+    "y": 321,
+    "width": 223,
+    "height": 218,
+    "dx": 150,
+    "dy": 10
+  },
+  {
+    "file": "logo-text/logo-text-1.png",
+    "x": 527,
+    "y": 283,
+    "width": 32,
+    "height": 30,
+    "dx": 0,
+    "dy": -22
+  },
+  {
+    "file": "logo-text/logo-text-2.png",
+    "x": 386,
+    "y": 427,
+    "width": 16,
+    "height": 50,
+    "dx": -48,
+    "dy": 5
+  },
+  {
+    "file": "logo-text/logo-text-3.png",
+    "x": 815,
+    "y": 413,
+    "width": 40,
+    "height": 15,
+    "dx": 32,
+    "dy": 4
+  },
+  {
+    "file": "logo-text/logo-text-4.png",
+    "x": 51,
+    "y": 316,
+    "width": 31,
+    "height": 19,
+    "dx": -148,
+    "dy": 12
+  },
+  {
+    "file": "logo-text/logo-text-5.png",
+    "x": 684,
+    "y": 423,
+    "width": 24,
+    "height": 25,
+    "dx": 173,
+    "dy": 10
+  },
+  {
+    "file": "logo-text/logo-text-6.png",
+    "x": 560,
+    "y": 556,
+    "width": 32,
+    "height": 13,
+    "dx": 0,
+    "dy": 55
+  }
+]

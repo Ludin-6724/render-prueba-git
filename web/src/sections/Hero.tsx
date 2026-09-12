@@ -1,31 +1,19 @@
 import { useEffect, useRef } from 'react'
 import { ArrowDown, ArrowUpRight } from 'lucide-react'
+import parts from '@/content/camera-parts.json'
 
-// Coordinates in the supplied 864 × 679 photograph; crops retain their original alpha.
-const PARTS = [
-  { file: 'monitor', x: 471, y: 1, dx: 48, dy: -130, angle: 0.06 },
-  { file: 'battery', x: 4, y: 270, dx: -145, dy: 12, angle: -0.12 },
-  { file: 'body', x: 228, y: 335, dx: -24, dy: 0, angle: 0 },
-  { file: 'lens', x: 549, y: 321, dx: 175, dy: 28, angle: 0.06 },
-  { file: 'baseplate', x: 237, y: 616, dx: 0, dy: 100, angle: 0 },
-]
-const SHOTS = [
-  { at: 0, spread: 0, zoom: 1, x: 432, y: 339, focus: -1 },
-  { at: 0.34, spread: 1, zoom: 0.78, x: 432, y: 339, focus: -1 },
-  { at: 0.67, spread: 1, zoom: 1.7, x: 782, y: 440, focus: 3 },
-  { at: 1, spread: 1, zoom: 1.65, x: 636, y: 4, focus: 0 },
-]
+const SOURCE = '/assets/camera/segments/'
 const CHAPTERS = [
-  ['Todo empieza con una mirada.', 'Producción audiovisual en Chiquimula, Guatemala.'],
-  ['Cada pieza tiene un propósito.', 'Una mirada al equipo detrás de la imagen.'],
-  ['La historia, en cada detalle.', 'Óptica. Encuadre. Intención.'],
-  ['Una nueva perspectiva.', 'Del primer encuadre a la entrega final.'],
+  ['Cada pieza cuenta.', 'Explora el equipo detrás de nuestras historias.'],
+  ['Una mirada de 360°.', 'El equipo se transforma con cada perspectiva.'],
+  ['Todo vuelve a su lugar.', 'Listos para contar la siguiente historia.'],
 ]
 const clamp = (n: number) => Math.min(1, Math.max(0, n))
 const smooth = (n: number) => n * n * (3 - 2 * n)
 
 export default function Hero() {
   const wrapRef = useRef<HTMLElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -33,131 +21,163 @@ export default function Hero() {
 
   useEffect(() => {
     const wrap = wrapRef.current
+    const video = videoRef.current
     const canvas = canvasRef.current
-    if (!wrap || !canvas) return
+    if (!wrap || !canvas || !video) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const media = matchMedia('(prefers-reduced-motion: reduce)')
     let alive = true
     let raf = 0
-    let lastFrame = -1
-    let lastChapter = -1
-    let images: HTMLImageElement[] = []
-    let chassis: HTMLCanvasElement | null = null
     let width = 0
     let height = 0
+    let desiredTime = 0
+    let ready = false
+    let videoFailed = false
+    let assembledLayer: HTMLCanvasElement | null = null
+    let layers: HTMLCanvasElement[] = []
+    let rootLayer: HTMLCanvasElement | null = null
+    let lastFrame = -1
 
+    // One seek in flight. Fast scrolling replaces the target, never queues stale seeks.
+    const seek = () => {
+      if (videoFailed || video.readyState < 1 || video.seeking || !Number.isFinite(video.duration)) return
+      if (Math.abs(video.currentTime - desiredTime) > 1 / 48) video.currentTime = desiredTime
+    }
     const draw = () => {
       raf = 0
-      if (!alive || !chassis) return
-      const box = wrap.getBoundingClientRect()
-      const p = motion.matches ? 0 : clamp(-box.top / Math.max(1, wrap.offsetHeight - window.innerHeight))
-      const frame = Math.round(p * 180)
-      if (frame === lastFrame) return
+      if (!alive) return
+      const p = media.matches ? 0 : clamp(-wrap.getBoundingClientRect().top / Math.max(1, wrap.offsetHeight - innerHeight))
+      const frame = Math.round(p * 300)
+      if (lastFrame === frame) return
       lastFrame = frame
-      canvas.dataset.frame = String(frame)
-      const position = frame / 180
-      const stop = Math.min(2, Math.max(0, SHOTS.findIndex((s) => s.at >= position) - 1))
-      const a = SHOTS[stop]
-      const b = SHOTS[stop + 1]
-      const t = smooth(clamp((position - a.at) / (b.at - a.at)))
-      const mix = (start: number, end: number) => start + (end - start) * t
-      const spread = mix(a.spread, b.spread)
-      const scale = Math.min(width / 1110, height / 860) * mix(a.zoom, b.zoom)
-      const emphasis = (i: number) => mix(a.focus === -1 || a.focus === i ? 1 : 0.24, b.focus === -1 || b.focus === i ? 1 : 0.24)
-      ctx.clearRect(0, 0, width, height)
-      ctx.save()
-      ctx.translate(width / 2, height / 2)
-      ctx.scale(scale, scale)
-      ctx.translate(-mix(a.x, b.x), -mix(a.y, b.y))
-      if (frame === 0) ctx.drawImage(images[0], 0, 0)
-      else {
-        ctx.globalAlpha = emphasis(-1) * (1 - smooth(clamp(spread * 2)))
-        ctx.drawImage(chassis, 0, 0)
-        PARTS.forEach((part, i) => {
-          const img = images[i + 1]
-          ctx.save()
-          ctx.globalAlpha = emphasis(i)
-          ctx.translate(part.x + img.width / 2 + part.dx * spread, part.y + img.height / 2 + part.dy * spread)
-          ctx.rotate(part.angle * spread)
-          ctx.drawImage(img, -img.width / 2, -img.height / 2)
-          ctx.restore()
-        })
+      wrap.dataset.frame = String(frame)
+      const duration = Number.isFinite(video.duration) ? video.duration : 10
+      desiredTime = clamp((p - 0.22) / 0.78) * Math.max(0, duration - 1 / 24)
+      if (!media.matches) seek()
+      const local = videoFailed ? p : clamp(p / 0.22)
+      const spread = smooth(Math.sin(Math.PI * local))
+      // The entire segmented rig first opens and closes. Its matching side view
+      // dissolves into the supplied 360 video, which opens, rotates and closes again.
+      canvas.style.opacity = videoFailed || media.matches ? '1' : String(1 - smooth(clamp((p - 0.20) / 0.05)))
+      wrap.dataset.spread = spread.toFixed(3)
+      if (ready && rootLayer) {
+        ctx.clearRect(0, 0, width, height)
+        const scale = Math.min(width / 1280, height / 720)
+        ctx.save()
+        ctx.translate(width / 2, height / 2)
+        ctx.scale(scale, scale)
+        ctx.fillStyle = '#171a19'
+        ctx.fillRect(-640, -360, 1280, 720)
+        const detailScale = 1 - spread * (width < 760 ? 0.24 : 0.17)
+        ctx.scale(detailScale, detailScale)
+        ctx.translate(-459, -350)
+        if ((local < 0.005 || media.matches) && assembledLayer) ctx.drawImage(assembledLayer, 2, 0)
+        else {
+          ctx.drawImage(rootLayer, 0, 0)
+          parts.forEach((part, i) => ctx.drawImage(layers[i], part.x + part.dx * spread, part.y + part.dy * spread))
+        }
+        ctx.restore()
       }
-      ctx.restore()
-      const chapter = position < 0.16 ? 0 : position < 0.49 ? 1 : position < 0.83 ? 2 : 3
-      if (chapter !== lastChapter) {
-        lastChapter = chapter
-        chaptersRef.current?.querySelectorAll<HTMLElement>('[data-chapter]').forEach((el, i) => { el.hidden = chapter !== i })
-      }
-      if (titleRef.current) titleRef.current.style.opacity = String(1 - clamp(position * 4) * 0.87)
-      if (progressRef.current) progressRef.current.style.transform = `scaleX(${position})`
+      if (titleRef.current) titleRef.current.style.opacity = String(1 - smooth(clamp(p * 5)) * 0.9)
+      if (progressRef.current) progressRef.current.style.transform = `scaleX(${p})`
+      const chapter = p < 0.23 ? 0 : p < 0.86 ? 1 : 2
+      chaptersRef.current?.querySelectorAll<HTMLElement>('[data-chapter]').forEach((el, i) => { el.hidden = chapter !== i })
     }
     const schedule = () => { if (!raf) raf = requestAnimationFrame(draw) }
+    const invalidate = () => { lastFrame = -1; schedule() }
     const resize = () => {
       const rect = canvas.getBoundingClientRect()
-      width = rect.width
-      height = rect.height
-      const ratio = Math.min(window.devicePixelRatio || 1, 2)
-      canvas.width = Math.round(width * ratio)
-      canvas.height = Math.round(height * ratio)
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-      lastFrame = -1
-      schedule()
+      width = rect.width; height = rect.height
+      const dpr = Math.min(devicePixelRatio || 1, 2)
+      canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      invalidate()
     }
-    const sources = ['assembled', ...PARTS.map((p) => p.file)]
-    Promise.all(sources.map((file) => new Promise<HTMLImageElement>((resolve, reject) => {
-      const img = new Image()
-      img.onload = () => resolve(img)
-      img.onerror = reject
-      img.src = `/assets/camera/${file}.png`
-    }))).then((loaded) => {
+    const onVideoReady = () => {
+      videoFailed = false
+      wrap.dataset.videoReady = 'true'
+      invalidate()
+    }
+    const onVideoError = () => { videoFailed = true; invalidate() }
+    const onSeeked = () => { wrap.dataset.videoTime = video.currentTime.toFixed(3); seek() }
+    const onMotionChange = () => {
+      if (!media.matches && !video.getAttribute('src')) { video.src = '/videos/camera-360.mp4'; video.load() }
+      if (media.matches) video.pause()
+      invalidate()
+    }
+    const files = ['camera-body/camera-body-2.png', 'professional-cinema-camera.png', 'black-background/black-background-1.png', ...parts.map(p => p.file)]
+    Promise.all(files.map(file => new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = SOURCE + file
+    }))).then(images => {
       if (!alive) return
-      images = loaded
-      chassis = document.createElement('canvas')
-      chassis.width = 864
-      chassis.height = 679
-      const layer = chassis.getContext('2d')!
-      layer.drawImage(images[0], 0, 0)
-      layer.globalCompositeOperation = 'destination-out'
-      PARTS.forEach((part, i) => layer.drawImage(images[i + 1], part.x, part.y))
-      resize()
+      const makeLayer = (img: HTMLImageElement) => {
+        const target = document.createElement('canvas'); target.width = img.width; target.height = img.height
+        target.getContext('2d')!.drawImage(img, 0, 0); return target
+      }
+      assembledLayer = makeLayer(images[1])
+      const assembled = assembledLayer.getContext('2d')!
+      assembled.globalCompositeOperation = 'destination-out'
+      assembled.drawImage(images[2], -9, -4)
+      rootLayer = makeLayer(images[0])
+      const root = rootLayer.getContext('2d')!
+      root.globalCompositeOperation = 'destination-out'
+      // The negative-space segment trims the surrounding matte, never floats as a part.
+      root.drawImage(images[2], -7, -4)
+      parts.forEach((part, i) => root.drawImage(images[i + 3], part.x, part.y))
+      layers = parts.map((part, i) => {
+        const target = makeLayer(images[i + 3]); const layer = target.getContext('2d')!
+        layer.globalCompositeOperation = 'destination-out'
+        // Nested crops (screen, labels, logos) are removed from their larger parent
+        // before moving, so the source isn't duplicated during the exploded view.
+        parts.forEach((child, j) => {
+          if (i !== j && child.width * child.height < part.width * part.height && child.x >= part.x && child.y >= part.y && child.x + child.width <= part.x + part.width && child.y + child.height <= part.y + part.height) {
+            layer.drawImage(images[j + 3], child.x - part.x, child.y - part.y)
+          }
+        })
+        return target
+      })
+      ready = true
+      wrap.dataset.parts = String(files.length)
       wrap.dataset.ready = 'true'
-    }).catch(() => { /* Preserve the complete-camera fallback on network/canvas failure. */ })
-    const observer = new ResizeObserver(resize)
-    observer.observe(canvas)
+      resize()
+    }).catch(() => {
+      // If a crop fails, the supplied video's poster and its complete 360 remain usable.
+      if (alive) { canvas.style.display = 'none'; wrap.dataset.partsError = 'true' }
+    })
+    video.addEventListener('loadeddata', onVideoReady)
+    video.addEventListener('loadedmetadata', invalidate)
+    video.addEventListener('seeked', onSeeked)
+    video.addEventListener('error', onVideoError)
+    if (!media.matches) { video.src = '/videos/camera-360.mp4'; video.load() }
+    const observer = new ResizeObserver(resize); observer.observe(canvas)
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', resize)
-    motion.addEventListener('change', resize)
+    media.addEventListener('change', onMotionChange)
     return () => {
-      alive = false
-      cancelAnimationFrame(raf)
-      observer.disconnect()
-      window.removeEventListener('scroll', schedule)
-      window.removeEventListener('resize', resize)
-      motion.removeEventListener('change', resize)
+      alive = false; cancelAnimationFrame(raf); observer.disconnect()
+      video.pause(); video.removeEventListener('loadeddata', onVideoReady); video.removeEventListener('loadedmetadata', invalidate)
+      video.removeEventListener('seeked', onSeeked); video.removeEventListener('error', onVideoError)
+      video.removeAttribute('src'); video.load()
+      window.removeEventListener('scroll', schedule); window.removeEventListener('resize', resize)
+      media.removeEventListener('change', onMotionChange)
     }
   }, [])
 
   return (
-    <section ref={wrapRef} id="inicio" className="camera-story" aria-label="RENDER Multimedia, producción audiovisual">
+    <section ref={wrapRef} id="inicio" className="camera-story camera-story-360" aria-label="RENDER Multimedia, producción audiovisual">
       <div className="camera-stage">
         <h1 ref={titleRef} className="camera-brand" aria-label="RENDER Multimedia">RENDER <span>Multimedia</span></h1>
-        <div className="camera-scene">
-          <img className="camera-fallback" src="/assets/camera/assembled.png" alt="Cámara de cine con monitor, batería y óptica" width={864} height={679} fetchPriority="high" />
+        <div className="camera-scene" role="img" aria-label="Cámara de cine que se desarma, gira 360 grados y se vuelve a armar con el scroll">
+          <video ref={videoRef} className="camera-video" poster="/assets/camera/360-poster.png" muted playsInline preload="auto" disablePictureInPicture aria-hidden="true" />
           <canvas ref={canvasRef} className="camera-canvas" aria-hidden="true" />
         </div>
         <a className="camera-skip" href="#portfolio">Ver nuestro trabajo <ArrowUpRight size={18} aria-hidden="true" /></a>
         <div className="camera-caption">
           <div ref={chaptersRef} className="camera-chapters">
-            {CHAPTERS.map(([title, detail], i) => (
-              <div key={title} data-chapter={i} hidden={i !== 0}>
-                <p className="camera-chapter-title">{title}</p>
-                <p className="camera-chapter-detail">{detail}</p>
-              </div>
-            ))}
+            {CHAPTERS.map(([title, detail], i) => <div key={title} data-chapter={i} hidden={i !== 0}><p className="camera-chapter-title">{title}</p><p className="camera-chapter-detail">{detail}</p></div>)}
           </div>
-          <div className="camera-scroll-hint" aria-hidden="true"><ArrowDown size={18} /> <span>Explora los detalles</span></div>
+          <div className="camera-scroll-hint" aria-hidden="true"><ArrowDown size={18} /><span>Desarma. Gira. Vuelve a armar.</span></div>
         </div>
         <div className="camera-progress" aria-hidden="true"><div ref={progressRef} /></div>
       </div>
