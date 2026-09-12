@@ -239,16 +239,12 @@ section[id] { scroll-margin-top: 6rem; }
 .circle-control { width: 48px; height: 48px; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid currentColor; border-radius: 50%; transition: background-color .18s, color .18s, border-color .18s; }
 .circle-control:hover { background: var(--amber); color: var(--night); border-color: var(--amber); }
 
-/* The entire camera sequence is drawn from six local PNGs, only when scroll changes. */
+/* Camera stage: its single turn follows normal document scrolling. */
 .camera-story { height: 250svh; background: var(--paper-warm); }
 .camera-stage { position: sticky; top: 0; height: 100svh; min-height: 620px; overflow: hidden; }
 .camera-brand { position: absolute; z-index: 1; top: 100px; left: var(--gutter); font-family: 'Archivo Black', 'Archivo', sans-serif; font-size: var(--type-display); line-height: .87; letter-spacing: -.04em; pointer-events: none; }
 .camera-brand span { display: block; font-family: 'Archivo', sans-serif; font-size: .26em; line-height: 1.25; letter-spacing: .025em; font-weight: 500; margin-top: .4em; }
 .camera-scene { position: absolute; inset: 130px 0 96px; }
-.camera-canvas { display: block; width: 100%; height: 100%; opacity: 0; }
-.camera-fallback { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 78%; height: 79%; width: auto; object-fit: contain; }
-.camera-story[data-ready='true'] .camera-canvas { opacity: 1; }
-.camera-story[data-ready='true'] .camera-fallback { visibility: hidden; }
 .camera-skip { position: absolute; top: 112px; right: var(--gutter); z-index: 2; display: inline-flex; gap: .75rem; align-items: center; min-height: 44px; font-size: var(--type-meta); font-weight: 600; border-bottom: 1px solid var(--ink); }
 .camera-skip:hover { border-color: var(--amber); }
 .camera-caption { position: absolute; inset: auto var(--gutter) 30px; display: flex; justify-content: space-between; align-items: end; gap: 2rem; padding-right: 64px; }
@@ -360,28 +356,37 @@ section[id] { scroll-margin-top: 6rem; }
   .cursor-dot, .cursor-ring { display: none; }
 }
 
-/* The supplied 360 film and its segmented studio view share one photographic stage. */
-.camera-story-360 { height: 340svh; background: #171a19; color: var(--cream); }
-.camera-story-360 .camera-stage { background: #171a19; }
-.camera-story-360 .camera-scene { inset: 135px 0 100px; mask-image: linear-gradient(transparent, #000 7%, #000 93%, transparent); }
-.camera-story-360 .camera-canvas { position: absolute; inset: 0; opacity: 1; }
-.camera-video { display: block; width: 100%; height: 100%; object-fit: contain; }
-.camera-story-360 .camera-chapter-detail { color: #c7c0b8; }
-.camera-story-360 .camera-skip { border-color: #c7c0b8; }
-.camera-story-360 .camera-progress { background: #373b39; }
-.camera-story-360 .camera-progress > div { background: var(--amber); }
-.camera-story-360 :focus-visible { outline-color: var(--amber); }
+/* The camera is isolated in the delivered media; no dark backdrop or live keying. */
+.camera-story-360 { --camera-paper: #fdfdfd; height: 280svh; background: var(--camera-paper); color: var(--ink); }
+.camera-story-360 .camera-stage { background: var(--camera-paper); }
+.camera-story-360 .camera-brand { display: flex; align-items: baseline; gap: clamp(1rem, 2vw, 2rem); }
+.camera-story-360 .camera-brand span { margin-top: 0; letter-spacing: -.02em; font-weight: 600; }
+.camera-story-360 .camera-scene { inset: 260px 0 100px; }
+.camera-video, .camera-poster { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+.camera-video { opacity: 0; }
+.camera-story-360[data-video-ready='true']:not([data-reduced-motion='true']) .camera-video { opacity: 1; }
+.camera-story-360 .camera-chapter-detail { color: var(--muted-ink); }
+.camera-story-360 .camera-skip { border-color: var(--ink); }
+.camera-story-360 .camera-progress { background: #eee; }
+.camera-story-360 .camera-progress > div { background: #a7650b; }
+.camera-story-360 :focus-visible { outline-color: var(--ink); }
 .autoplay-control { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 44px; font-size: var(--type-meta); font-weight: 500; white-space: nowrap; text-underline-offset: 4px; }
 .autoplay-control:hover { text-decoration: underline; }
 .autoplay-control:disabled { opacity: .65; cursor: default; text-decoration: none; }
 .work-controls .autoplay-control { width: 100%; }
 @media (max-width: 767px) {
-  .camera-story-360 { height: 300svh; }
-  .camera-story-360 .camera-scene { inset: 185px -18% 160px; }
+  .camera-story-360 { height: 260svh; }
+  .camera-story-360 .camera-brand { display: block; }
+  .camera-story-360 .camera-brand span { font-size: .4em; margin-top: .5rem; }
+  .camera-story-360 .camera-scene { inset: 225px 0 160px; transform: scale(var(--camera-scale, 1.28)); }
   .work-controls { flex-wrap: wrap; }
   .work-controls .autoplay-control { width: auto; margin-right: auto; }
   .work-controls .work-counter { width: auto; }
   .testimonials-controls { gap: 1rem; flex-wrap: wrap; }
+}
+@media (max-height: 700px) and (min-width: 768px) {
+  .camera-story-360 .camera-scene { top: 220px; }
+  .camera-story-360 .camera-brand { font-size: clamp(4rem, 8vw, 6rem); }
 }
 @media (prefers-reduced-motion: reduce) {
   .camera-story-360 { height: auto; }

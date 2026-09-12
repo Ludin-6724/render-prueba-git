@@ -28,7 +28,7 @@ npm run build
 npm run preview
 ```
 
-`dist/` incluye HTML de las 7 rutas, `contacto.php`, `thank-you-page/`, `videos/camera-360.mp4` y `.htaccess`.
+`dist/` incluye HTML de las 7 rutas, `contacto.php`, `thank-you-page/`, `videos/camera-360-studio.mp4` y `.htaccess`.
 
 ## Cómo actualizar
 
@@ -48,16 +48,21 @@ Luego `npm run build`. No hace falta WordPress.
 
 ## Cámara y portafolio
 
-El hero usa los 20 PNG originales de `public/assets/camera/segments/` para
-abrir y cerrar las piezas durante el primer 22% del recorrido. Sus posiciones
-están en `src/content/camera-parts.json`. Las imágenes de fondo actúan como máscara
-y pantalla; los recortes contenidos se separan sin duplicar sus capas.
+El hero empieza con la cámara armada sobre blanco. Un único recorrido de scroll
+controla todo el giro del video, del tiempo cero al montaje final; después el
+bloque sticky se libera y continúa el contenido. No existe una fase de despiece
+adicional antes del giro.
 
-El resto del recorrido controla `public/videos/camera-360.mp4`, convertido del
-«Video 360.mp4» aportado por Ludin a H.264, sin audio y con keyframes frecuentes.
-El video contiene el giro con despiece y montaje. Un único seek pendiente sigue
-la posición más reciente del scroll. Se conserva un poster, alternativa por
-capas ante fallo del video y cámara estática con movimiento reducido.
+`public/videos/camera-360-studio.mp4` reutiliza la pista H.264 del «Video en
+blanco.mp4» aportado por Ludin, sin recomprimirla: solo se retira el audio y se
+activa faststart. El poster WebP sin pérdida procede de su primer fotograma.
+La imagen y la tipografía mantienen su nitidez; el título permanece opaco y
+separado del área de movimiento. El blanco del hero coincide con el blanco
+#fdfdfd del material original para evitar el borde del rectángulo del video.
+Durante carga, fallo o preferencia de movimiento reducido se conserva el poster.
+
+Los PNG originales de `public/assets/camera/segments/` se conservan como material
+fuente; la secuencia anterior por capas queda sustituida por el giro continuo.
 
 `Portfolio.tsx` presenta dos carruseles: ONG (18) y Comercial (5), con avance
 cada 6,5 segundos. Dar play detiene ambos mientras permanece ese reproductor;

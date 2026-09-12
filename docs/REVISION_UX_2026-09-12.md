@@ -130,3 +130,37 @@ cambios previos de dependencias no forman parte de esta publicación.
 - En móvil público (390 × 844), cámara completa cargada, fondo limpio y ancho
   del documento de 390 px. El video permaneció en el proyecto 03 durante la
   prueba de bloqueo; cambiar de proyecto retiró el reproductor.
+
+## Actualización: video blanco y título persistente
+
+Ludin pidió fondo blanco, cámara aislada que empiece armada y un giro 360 con
+scroll antes de continuar hacia el contenido. Después aportó «Video en blanco.mp4»
+y pidió más nitidez y mejor presencia de RENDER Multimedia durante el movimiento.
+Esta entrega sustituye el hero oscuro y la apertura adicional por capas.
+
+- Se reutiliza directamente la pista H.264 del nuevo video, sin recompresión,
+  segmentación ni filtros de imagen. Solo se retira el audio y se activa faststart.
+  SHA-256 de la pista en origen y entrega:
+  `fc5fbf72e15661478dd93c305a2d03a25fc5d03bf6b02a98045dcb030f5257b5`.
+- Video de 5.727.186 bytes, 1280 × 720, 24 fps y 10,041667 s. Poster WebP sin
+  pérdida de 248.754 bytes. La resolución conservada es la del archivo aportado.
+- Blanco del hero #fdfdfd, igual al fondo del video. Tinta y fuentes existentes:
+  Archivo/Archivo Black. RENDER y Multimedia forman una línea en escritorio y
+  dos en móvil; el título permanece completamente opaco y tiene un área propia,
+  separada del video durante todo el recorrido.
+- Un solo scroll controla el video de 0 a 10 s. Se retira el despiece previo del
+  primer 22%; alto de 280 svh en escritorio y 260 svh en móvil. Al terminar se
+  libera el sticky y continúa el documento. El plano móvil se abre durante el
+  despiece para mantener visibles las piezas.
+- Un único seek pendiente sigue el objetivo actual. Fallo de carga o movimiento
+  reducido conserva el poster; con movimiento reducido no se solicita el video
+  ni se fija el hero. Los originales y los 20 PNG de `segments` se conservan.
+- La entrega contiene el video blanco aportado. Los archivos experimentales de
+  segmentación local se retiraron del cambio. Los carruseles y demás secciones
+  conservan su comportamiento.
+
+Verificación local: TypeScript/Vite, ESLint del hero y diff sin errores. Inicio
+armado a tiempo 0, final del recorrido a 10 s/frame 240 y continuación hacia el
+contenido. Título con opacidad 1, sin solapamiento con el escenario. En móvil de
+390 px el documento mide 390 px; título termina a 190,5 px y escena empieza a
+225 px. Las capturas muestran texto legible y piezas dentro del encuadre.
