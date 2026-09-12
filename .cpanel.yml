@@ -1,5 +1,7 @@
 ---
 deployment:
   tasks:
-    - /bin/mkdir -p /home/rendermultimedia/public_html/wp-content/mu-plugins
-    - /usr/bin/install -m 0644 render-menu-uppercase.php /home/rendermultimedia/public_html/wp-content/mu-plugins/render-menu-uppercase.php
+    - export DEPLOYPATH=/home/rendermultimedia/public_html
+    - /bin/cp -f index.html 404.html contacto.php robots.txt sitemap.xml $DEPLOYPATH/
+    - /bin/cp -f .htaccess $DEPLOYPATH/.htaccess
+    - /bin/cp -R assets brand videos thank-you-page servicios comercial ongs nosotros contacto $DEPLOYPATH/

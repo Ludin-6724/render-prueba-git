@@ -1,7 +1,5 @@
-# RENDER Multimedia — prueba de Git
+# RENDER Multimedia (artefacto público)
 
-Repositorio de prueba para verificar la transferencia de archivos desde GitHub hacia un repositorio aislado en cPanel.
+Sitio compilado para cPanel. El código fuente está en el proyecto local viscode-render-dev/web.
 
-Archivo de prueba: `prueba-git.txt`.
-
-Este repositorio no contiene el sitio, respaldos ni credenciales. No configura despliegues ni modifica la web pública.
+El despliegue copia estos archivos a public_html. No borra WordPress; el .htaccess nuevo sirve esta web en el frente.

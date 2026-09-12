@@ -1,3 +1,0 @@
-RENDER Multimedia
-Prueba de transferencia GitHub a cPanel.
-Identificador: render-git-mcp-001
