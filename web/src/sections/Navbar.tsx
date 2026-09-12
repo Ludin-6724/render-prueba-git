@@ -1,56 +1,107 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { nav, site } from '@/content/site'
 
+const navLinkClass = 'flex min-h-11 items-center text-xs font-semibold uppercase tracking-[0.06em] text-[#0f0f0f] underline-offset-8 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f0f0f]'
+
 export default function Navbar() {
   const [open, setOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+  const [scrolled, setScrolled] = useState(() => window.scrollY > 40)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const portfolioRef = useRef<HTMLDetailsElement>(null)
+  const previousOverflow = useRef('')
   const location = useLocation()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
+    const onPointerDown = (event: PointerEvent) => {
+      const portfolio = portfolioRef.current
+      if (portfolio && event.target instanceof Node && !portfolio.contains(event.target)) portfolio.open = false
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      document.removeEventListener('pointerdown', onPointerDown)
+    }
   }, [])
 
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [open])
-
-  useEffect(() => {
-    setOpen(false)
+    dialogRef.current?.close()
+    if (portfolioRef.current) portfolioRef.current.open = false
   }, [location.pathname])
 
-  const overlay = [
-    { label: 'INICIO', href: '/', n: '01' },
-    { label: 'SERVICIOS', href: '/servicios/', n: '02' },
-    { label: 'COMERCIAL', href: '/comercial/', n: '03' },
-    { label: "ONG'S", href: '/ongs/', n: '04' },
-    { label: 'NOSOTROS', href: '/nosotros/', n: '05' },
-    { label: 'CONTACTO', href: '/contacto/', n: '06' },
-  ]
+  useEffect(() => {
+    const dialog = dialogRef.current
+    return () => {
+      if (dialog?.open) document.body.style.overflow = previousOverflow.current
+    }
+  }, [])
+
+  const openMenu = () => {
+    const dialog = dialogRef.current
+    if (!dialog || dialog.open) return
+    if (portfolioRef.current) portfolioRef.current.open = false
+    previousOverflow.current = document.body.style.overflow
+    dialog.showModal()
+    document.body.style.overflow = 'hidden'
+    setOpen(true)
+  }
+
+  const closeMenu = () => dialogRef.current?.close()
+  const overlay = nav.flatMap<{ label: string; href: string }>((item) => 'children' in item ? [...item.children] : [item])
 
   return (
     <>
       <header
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
-          scrolled ? 'bg-white/85 backdrop-blur-md border-b border-[#ececec]' : 'bg-transparent'
-        }`}
+        className={`fixed top-0 inset-x-0 z-50 border-b bg-white/95 transition-[border-color] duration-300 motion-reduce:transition-none ${scrolled ? 'border-[#ececec]' : 'border-transparent'}`}
       >
-        <div className="flex items-center justify-between px-6 md:px-12 h-20">
-          <Link to="/" className="flex items-center gap-3">
-            <img src="/brand/logo.svg" alt={site.name} className="h-8 md:h-10 w-auto" />
+        <div className="flex items-center justify-between gap-6 px-6 md:px-12 h-20">
+          <Link to="/" className="flex min-h-11 items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f0f0f]">
+            <img src="/brand/logo.svg" alt={site.name} width="1211" height="465" className="h-8 md:h-10 w-auto" />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-8" aria-label="Principal">
-            {nav.slice(1).map((l) => (
-              <Link
-                key={l.href}
-                to={l.href}
-                className="font-mono2 text-[11px] uppercase tracking-[0.25em] text-[#0f0f0f] hover:text-[#f7ac42] transition-colors"
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8" aria-label="Principal">
+            {nav.slice(1).map((item) => 'children' in item ? (
+              <details
+                key={item.label}
+                ref={portfolioRef}
+                className="group relative"
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape' && event.currentTarget.open) {
+                    event.preventDefault()
+                    event.currentTarget.open = false
+                    event.currentTarget.querySelector('summary')?.focus()
+                  }
+                }}
               >
-                {l.label}
+                <summary className={`${navLinkClass} cursor-pointer list-none gap-2 [&::-webkit-details-marker]:hidden`}>
+                  {item.label}
+                  <svg className="transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path d="m3 4.5 3 3 3-3" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                </summary>
+                <div className="absolute left-0 top-full min-w-44 border border-[#ececec] bg-white p-2">
+                  {item.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      to={child.href}
+                      aria-current={location.pathname === child.href ? 'page' : undefined}
+                      onClick={() => { if (portfolioRef.current) portfolioRef.current.open = false }}
+                      className={`${navLinkClass} px-3 hover:bg-[#faf7f2] focus-visible:outline-offset-[-2px]`}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            ) : (
+              <Link key={item.href} to={item.href} aria-current={location.pathname === item.href ? 'page' : undefined} className={navLinkClass}>
+                {item.label}
               </Link>
             ))}
           </nav>
@@ -58,69 +109,88 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <Link
               to="/contacto/"
-              className="hidden md:inline-flex items-center gap-2 border border-[#0f0f0f] px-5 py-2.5 font-mono2 text-[11px] uppercase tracking-[0.25em] hover:bg-[#0f0f0f] hover:text-white transition-colors"
+              className="hidden md:inline-flex min-h-11 items-center border border-[#0f0f0f] px-5 text-sm font-semibold hover:bg-[#0f0f0f] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f0f0f]"
             >
               Cotizar
-              <span className="text-[#f7ac42]">→</span>
             </Link>
             <button
+              ref={menuButtonRef}
               type="button"
-              onClick={() => setOpen(!open)}
-              aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
+              onClick={openMenu}
+              aria-label="Abrir menú"
               aria-expanded={open}
-              className="relative z-[70] flex h-11 w-11 flex-col items-center justify-center gap-[7px]"
+              aria-controls="menu-completo"
+              aria-haspopup="dialog"
+              className="flex h-11 w-11 shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f0f0f]"
             >
-              <span className={`block h-[2px] w-7 transition-all duration-300 ${open ? 'translate-y-[9px] rotate-45 bg-white' : 'bg-[#0f0f0f]'}`} />
-              <span className={`block h-[2px] w-7 transition-all duration-300 ${open ? 'opacity-0' : 'bg-[#0f0f0f]'}`} />
-              <span className={`block h-[2px] w-7 transition-all duration-300 ${open ? '-translate-y-[9px] -rotate-45 bg-white' : 'bg-[#0f0f0f]'}`} />
+              <svg width="28" height="24" viewBox="0 0 28 24" fill="none" aria-hidden="true">
+                <path d="M1 3h26M1 12h26M1 21h26" stroke="currentColor" strokeWidth="2" />
+              </svg>
             </button>
           </div>
         </div>
       </header>
 
-      <div
-        className={`fixed inset-0 z-[60] bg-[#0b0b0b] transition-[clip-path] duration-700 ${
-          open ? '[clip-path:inset(0_0_0%_0)]' : '[clip-path:inset(0_0_100%_0)]'
-        }`}
-        aria-hidden={!open}
+      <dialog
+        id="menu-completo"
+        ref={dialogRef}
+        aria-labelledby="menu-title"
+        onClose={() => {
+          document.body.style.overflow = previousOverflow.current
+          setOpen(false)
+          menuButtonRef.current?.focus({ preventScroll: true })
+        }}
+        className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto overscroll-contain border-0 bg-[#0b0b0b] p-0 text-[#FFF4E9] backdrop:bg-[#0b0b0b]"
       >
-        <div className="flex h-full flex-col justify-between px-6 md:px-12 pt-28 pb-10">
-          <nav className="flex flex-col" aria-label="Menú completo">
-            {overlay.map((l) => (
+        <h2 id="menu-title" className="sr-only">Menú principal</h2>
+        <button
+          type="button"
+          onClick={closeMenu}
+          aria-label="Cerrar menú"
+          className="fixed right-6 top-[18px] z-10 flex h-11 w-11 items-center justify-center bg-[#0b0b0b] text-[#FFF4E9] hover:text-white md:right-12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFF4E9]"
+        >
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+            <path d="m5 5 18 18M23 5 5 23" stroke="currentColor" strokeWidth="2" />
+          </svg>
+        </button>
+
+        <div className="relative flex min-h-full flex-col justify-between gap-12 px-6 md:px-12 pt-28 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+          <nav className="relative z-[1] flex flex-col" aria-label="Menú completo">
+            {overlay.map((item) => (
               <Link
-                key={l.href}
-                to={l.href}
-                className="group flex items-baseline gap-4 border-b border-white/10 py-3 md:py-4 overflow-hidden"
+                key={item.href}
+                to={item.href}
+                onClick={closeMenu}
+                aria-current={location.pathname === item.href ? 'page' : undefined}
+                className="flex min-h-11 items-center border-b border-white/15 py-3 text-[clamp(2rem,4.2vw,4rem)] font-semibold uppercase leading-tight tracking-[0.06em] underline-offset-8 hover:text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFF4E9]"
               >
-                <span className="font-mono2 text-xs text-[#f7ac42]">{l.n}</span>
-                <span className="font-display uppercase text-[9vw] md:text-[4.2vw] leading-none text-[#FFF4E9] transition-transform duration-500 group-hover:translate-x-4 group-hover:text-[#f7ac42]">
-                  {l.label}
-                </span>
+                {item.label}
               </Link>
             ))}
           </nav>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="relative z-[1] flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <p className="font-mono2 text-[10px] uppercase tracking-[0.3em] text-white/40">Escríbenos</p>
-              <a href={`mailto:${site.email}`} className="font-mono2 text-sm text-[#FFF4E9] hover:text-[#f7ac42] transition-colors">
+              <p className="text-sm text-[#c9c1b9]">Escríbenos</p>
+              <a href={`mailto:${site.email}`} className="inline-flex min-h-11 items-center break-all text-base underline-offset-4 hover:text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFF4E9]">
                 {site.email}
               </a>
             </div>
-            <div className="text-right">
-              <p className="font-mono2 text-[10px] uppercase tracking-[0.3em] text-white/40">Estudio</p>
-              <p className="font-mono2 text-sm text-[#FFF4E9]">10 avenida 4-40, Chiquimula 20001</p>
+            <div className="md:text-right">
+              <p className="text-sm text-[#c9c1b9]">Estudio</p>
+              <p className="mt-2 text-base">10 avenida 4-40, Chiquimula 20001</p>
             </div>
           </div>
-        </div>
 
-        <img
-          src="/brand/isotipo.svg"
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute -right-16 -bottom-24 w-[420px] opacity-[0.07] animate-spin-slow"
-        />
-      </div>
+          <img
+            src="/brand/isotipo.svg"
+            alt=""
+            width="764"
+            height="950"
+            className="pointer-events-none absolute bottom-0 right-0 w-56 opacity-[0.07] md:w-80"
+          />
+        </div>
+      </dialog>
     </>
   )
 }

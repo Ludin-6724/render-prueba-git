@@ -1,45 +1,83 @@
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import useEmblaCarousel from 'embla-carousel-react'
+import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
-import { comercial, ongs } from '@/content/site'
+import { comercial, ongs, type Proyecto } from '@/content/site'
+
+function ProjectCarousel({ title, projects, category, description }: {
+  title: string; projects: Proyecto[]; category: 'ongs' | 'comercial'; description: string
+}) {
+  const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [viewport, api] = useEmblaCarousel({ loop: true, duration: reduced ? 0 : 32 })
+  const [selected, setSelected] = useState(0)
+  const sync = useCallback(() => { if (api) setSelected(api.selectedScrollSnap()) }, [api])
+  useEffect(() => {
+    if (!api) return
+    api.on('select', sync).on('reInit', sync)
+    return () => { api.off('select', sync).off('reInit', sync) }
+  }, [api, sync])
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReduced(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+  const project = projects[selected]
+  return (
+    <section className="work-category" aria-labelledby={`work-${category}`}>
+      <header className="work-category-heading">
+        <h3 id={`work-${category}`}>{title}</h3>
+        <p>{description}</p>
+        <Link to={`/${category}/`} className="work-all">Ver todos los proyectos <ArrowUpRight size={18} aria-hidden="true" /></Link>
+      </header>
+      <div className="work-carousel" role="region" aria-roledescription="carrusel" aria-label={`Proyectos ${title}`}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault()
+            if (e.key === 'ArrowLeft') api?.scrollPrev()
+            else api?.scrollNext()
+          }
+        }}>
+        <div className="work-viewport" ref={viewport}>
+          <div className="work-track">
+            {projects.map((p, i) => (
+              <div className={`work-slide ${selected === i ? 'is-selected' : ''}`} key={p.youtube}
+                role="group" aria-roledescription="diapositiva" aria-label={`${i + 1} de ${projects.length}: ${p.titulo}`}
+                aria-hidden={selected !== i} inert={selected !== i}>
+                <YoutubeEmbed key={`${p.youtube}-${selected === i}`} id={p.youtube} title={p.titulo} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="work-details">
+          <div className="work-copy" aria-live="polite" aria-atomic="true">
+            <h4>{project.titulo}</h4>
+            <p>{project.desc}</p>
+          </div>
+          <div className="work-controls">
+            <span className="work-counter" aria-label={`Proyecto ${selected + 1} de ${projects.length}`}>
+              {String(selected + 1).padStart(2, '0')} <span>/ {String(projects.length).padStart(2, '0')}</span>
+            </span>
+            <button className="circle-control" type="button" aria-label={`Proyecto anterior de ${title}`} onClick={() => api?.scrollPrev()}><ArrowLeft size={20} aria-hidden="true" /></button>
+            <button className="circle-control" type="button" aria-label={`Proyecto siguiente de ${title}`} onClick={() => api?.scrollNext()}><ArrowRight size={20} aria-hidden="true" /></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default function Portfolio() {
-  const destacados = [comercial[0], ongs[0], comercial[2], ongs[4]]
-
   return (
-    <section id="portfolio" className="bg-[#0b0b0b] text-[#FFF4E9]">
-      <div className="px-6 md:px-12 pt-24 md:pt-36 pb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <p className="reveal font-mono2 text-[11px] uppercase tracking-[0.35em] text-[#f7ac42] mb-4">Trabajo seleccionado</p>
-          <h2 className="reveal reveal-delay-1 font-display uppercase text-5xl md:text-7xl leading-[0.9] tracking-tight">
-            Portfolio
-          </h2>
-        </div>
-        <div className="reveal reveal-delay-2 flex gap-6 font-mono2 text-[10px] uppercase tracking-[0.25em]">
-          <Link to="/comercial/" className="text-[#f7ac42] hover:text-[#FFF4E9]">Comercial</Link>
-          <Link to="/ongs/" className="text-[#f7ac42] hover:text-[#FFF4E9]">ONG&apos;s</Link>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2">
-        {destacados.map((p, i) => (
-          <article key={p.youtube} className={`reveal ${i ? 'reveal-delay-1' : ''} border-t border-white/10 p-6 md:p-10`}>
-            <p className="font-mono2 text-[10px] uppercase tracking-[0.3em] text-[#f7ac42] mb-3">
-              {p.categoria === 'comercial' ? 'Comercial' : "ONG's"}
-            </p>
-            <h3 className="font-display uppercase text-2xl md:text-4xl tracking-tight mb-6">{p.titulo}</h3>
-            <YoutubeEmbed id={p.youtube} title={p.titulo} />
-            <p className="mt-5 text-white/60 text-sm leading-relaxed max-w-lg">{p.desc}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="border-t border-white/10 px-6 md:px-12 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <p className="font-mono2 text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/40">
-          {comercial.length} comerciales · {ongs.length} proyectos institucionales
-        </p>
-        <Link to="/comercial/" className="font-mono2 text-[10px] md:text-xs uppercase tracking-[0.3em] text-[#f7ac42] hover:text-[#FFF4E9] transition-colors">
-          Ver todo el trabajo →
-        </Link>
+    <section id="portfolio" className="work-section" aria-labelledby="work-title">
+      <div className="section-shell">
+        <header className="section-heading work-heading">
+          <h2 id="work-title" className="type-section">Nuestro trabajo</h2>
+          <p className="type-body">Historias de personas.<br />Historias de marcas.</p>
+        </header>
+        <ProjectCarousel title="ONG" category="ongs" projects={ongs} description="Documentales y proyectos que ponen a las personas en el centro." />
+        <ProjectCarousel title="Comercial" category="comercial" projects={comercial} description="Producciones que dan forma a la identidad de cada marca." />
       </div>
     </section>
   )

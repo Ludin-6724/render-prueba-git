@@ -1,21 +1,41 @@
+import { useRef, useState } from 'react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { testimonios } from '@/content/site'
 
 export default function Testimonios() {
+  const [index, setIndex] = useState(0)
+  const drag = useRef<{ x: number; y: number } | null>(null)
+  const go = (dir: number) => setIndex((i) => (i + dir + testimonios.length) % testimonios.length)
   return (
-    <section className="bg-[#faf7f2] border-y border-[#ececec] px-6 md:px-12 py-24 md:py-36">
-      <p className="reveal font-mono2 text-[11px] uppercase tracking-[0.35em] text-[#f7ac42] mb-12 text-center">
-        Qué dice la gente de nosotros
-      </p>
-      <div className="max-w-5xl mx-auto space-y-16">
-        {testimonios.map((t, i) => (
-          <blockquote key={i} className={`reveal ${i ? 'reveal-delay-1' : ''}`}>
-            <p className={`font-display uppercase tracking-tight text-[#0f0f0f] leading-[1.12] ${
-              i === 0 ? 'text-[5.4vw] md:text-[2.4vw]' : 'text-[4.2vw] md:text-[1.8vw] text-[#3a3a3a]'
-            }`}>
-              “{t}”
-            </p>
-          </blockquote>
-        ))}
+    <section className="testimonials-section" aria-labelledby="testimonials-title">
+      <div className="section-shell testimonials-layout">
+        <h2 id="testimonials-title" className="type-section">La voz de quienes confían</h2>
+        <div role="region" aria-roledescription="carrusel" aria-label="Testimonios de clientes" className="testimonials-carousel"
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); go(e.key === 'ArrowRight' ? 1 : -1) }
+          }}>
+          <div className="testimonials-quote" onPointerDown={(e) => { drag.current = { x: e.clientX, y: e.clientY } }}
+            onPointerCancel={() => { drag.current = null }}
+            onPointerUp={(e) => {
+              if (!drag.current) return
+              const dx = e.clientX - drag.current.x
+              const dy = e.clientY - drag.current.y
+              drag.current = null
+              if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1)
+            }}>
+            <figure key={index} className="quote-in" aria-live="polite" aria-atomic="true">
+              <blockquote>“{testimonios[index]}”</blockquote>
+              <figcaption>Cliente de RENDER</figcaption>
+            </figure>
+          </div>
+          <div className="testimonials-controls">
+            <div className="flex gap-2">
+              <button className="circle-control" type="button" aria-label="Testimonio anterior" onClick={() => go(-1)}><ArrowLeft size={20} aria-hidden="true" /></button>
+              <button className="circle-control" type="button" aria-label="Testimonio siguiente" onClick={() => go(1)}><ArrowRight size={20} aria-hidden="true" /></button>
+            </div>
+            <span className="work-counter">{String(index + 1).padStart(2, '0')} <span>/ {String(testimonios.length).padStart(2, '0')}</span></span>
+          </div>
+        </div>
       </div>
     </section>
   )

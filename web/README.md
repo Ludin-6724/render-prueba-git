@@ -35,7 +35,7 @@ npm run preview
 | Qué | Dónde |
 | --- | --- |
 | Textos, proyectos, YouTube, equipo, contactos | `src/content/site.ts` |
-| Video de cámara (scroll) | `public/videos/Video1Render.mp4` + poster |
+| Cámara por piezas (scroll) | `public/assets/camera/` y `src/sections/Hero.tsx` |
 | Logo / isotipo | `public/brand/` |
 | Fotos de equipo | `public/assets/team/` |
 | Destinatario del formulario | `public/contacto.php` |
@@ -44,8 +44,19 @@ Luego `npm run build`. No hace falta WordPress.
 
 ## Publicación
 
-`.cpanel.yml` apunta a `public_html/nuevo/` (pruebas). No desplegar sobre la raíz de WordPress sin autorización expresa.
+`.cpanel.yml` publica el artefacto en el dominio oficial. Aplicar el flujo autorizado de `../docs/FLUJO_PUBLICACION.md`. El repositorio de entrega contiene solo archivos públicos.
 
-## Video de cámara
+## Cámara y portafolio
 
-`Video1Render.mp4`: H.264, ~10 s, 1168×784, **sin canal alfa**. El hero lo recorre con el scroll (`currentTime`). Silenciado. Con `prefers-reduced-motion` se queda en el poster.
+El hero compone 181 posiciones de scroll usando seis PNG con transparencia de
+`public/assets/camera/`, sin video ni chroma key en tiempo real. La imagen completa
+permanece como alternativa durante carga o fallo. Con movimiento reducido se
+muestra la cámara estática y se elimina el recorrido fijo del scroll.
+
+`Portfolio.tsx` presenta dos carruseles independientes: ONG (18) y Comercial (5).
+Admiten arrastre, botones y flechas de teclado. Al cambiar de proyecto se desmonta
+el reproductor anterior. Los enlaces conservan `/ongs/` y `/comercial/`.
+
+La escala de tipografía y espacios se encuentra en `src/index.css`, en el bloque
+“Shared roles and rhythm”. Archivo es la familia de lectura y Archivo Black la de
+los títulos. Inventario y verificación: `../docs/REVISION_UX_2026-09-12.md`.

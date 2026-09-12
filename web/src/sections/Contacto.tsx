@@ -109,7 +109,7 @@ export default function Contacto({ error = null }: Props) {
               type="submit"
               className="group inline-flex items-center gap-4 bg-[#f7ac42] text-[#0b0b0b] px-10 py-5 font-display uppercase tracking-tight text-lg hover:bg-[#FFF4E9] transition-colors"
             >
-              Enviar
+              Enviar cotización
               <span className="transition-transform duration-300 group-hover:translate-x-2">→</span>
             </button>
           </form>
