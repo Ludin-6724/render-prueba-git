@@ -357,14 +357,14 @@ section[id] { scroll-margin-top: 6rem; }
 }
 
 /* The camera is isolated in the delivered media; no dark backdrop or live keying. */
-.camera-story-360 { --camera-paper: #fdfdfd; height: 280svh; background: var(--camera-paper); color: var(--ink); }
+.camera-story-360 { --camera-paper: #fdfdfd; height: 220svh; background: var(--camera-paper); color: var(--ink); }
 .camera-story-360 .camera-stage { background: var(--camera-paper); }
 .camera-story-360 .camera-brand { display: flex; align-items: baseline; gap: clamp(1rem, 2vw, 2rem); }
 .camera-story-360 .camera-brand span { margin-top: 0; letter-spacing: -.02em; font-weight: 600; }
 .camera-story-360 .camera-scene { inset: 260px 0 100px; }
-.camera-video, .camera-poster { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
-.camera-video { opacity: 0; }
-.camera-story-360[data-video-ready='true']:not([data-reduced-motion='true']) .camera-video { opacity: 1; }
+.camera-canvas, .camera-poster { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+.camera-canvas { opacity: 0; }
+.camera-story-360[data-sequence-ready='true']:not([data-static='true']) .camera-canvas { opacity: 1; }
 .camera-story-360 .camera-chapter-detail { color: var(--muted-ink); }
 .camera-story-360 .camera-skip { border-color: var(--ink); }
 .camera-story-360 .camera-progress { background: #eee; }
@@ -375,10 +375,10 @@ section[id] { scroll-margin-top: 6rem; }
 .autoplay-control:disabled { opacity: .65; cursor: default; text-decoration: none; }
 .work-controls .autoplay-control { width: 100%; }
 @media (max-width: 767px) {
-  .camera-story-360 { height: 260svh; }
+  .camera-story-360 { height: 190svh; }
   .camera-story-360 .camera-brand { display: block; }
   .camera-story-360 .camera-brand span { font-size: .4em; margin-top: .5rem; }
-  .camera-story-360 .camera-scene { inset: 225px 0 160px; transform: scale(var(--camera-scale, 1.28)); }
+  .camera-story-360 .camera-scene { inset: 210px 0 150px; }
   .work-controls { flex-wrap: wrap; }
   .work-controls .autoplay-control { width: auto; margin-right: auto; }
   .work-controls .work-counter { width: auto; }
@@ -390,4 +390,14 @@ section[id] { scroll-margin-top: 6rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .camera-story-360 { height: auto; }
+}
+
+/* A still hero remains useful with reduced motion, data saver or a short landscape viewport. */
+.camera-story-360[data-static='true'] { height: auto; }
+.camera-story-360[data-static='true'] .camera-stage { position: relative; }
+.camera-story-360[data-static='true'] .camera-progress,
+.camera-story-360[data-static='true'] .camera-scroll-hint { display: none; }
+@media (max-height: 500px) {
+  .camera-story-360 { height: auto; }
+  .camera-story-360 .camera-stage { position: relative; min-height: 620px; }
 }
