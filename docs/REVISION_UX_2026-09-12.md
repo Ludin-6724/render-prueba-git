@@ -67,3 +67,17 @@ por las imágenes aportadas: vista de 864 × 679 y recortes de menor tamaño.
   navegador no expone emulación de esa preferencia.
 
 Criterios de revisión: [Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md).
+
+## Publicación confirmada
+
+- Código local: `a78a5442855da906b0fe759049a2f8ef86000797`.
+- Entrega GitHub: `1ce68198e850c24fac31da835f7dfeec879d5d9d` en
+  `Ludin-6724/render-prueba-git`, rama `main`.
+- cPanel: despliegue 4, estado `succeeded`. Se limpió caché NGINX después.
+- 21 comprobaciones HTTP (archivos y rutas) devolvieron 200 y coincidencia SHA-256
+  exacta con el build. Evidencia local: `private/local-evidence/ux-public-check.json`.
+- En producción: cámara lista, ningún elemento video en Inicio; carruseles ONG y
+  Comercial independientes; menú móvil abre/cierra y devuelve foco; ancho del
+  documento 390 px en viewport de 390 px.
+- Se mantienen los artefactos anteriores para facilitar la reversión por Git.
+  No se incluyeron los MP4 experimentales locales en esta publicación.
