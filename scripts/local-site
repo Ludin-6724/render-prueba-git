@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")/.."
+case "${1:-status}" in
+  start) docker compose -f runtime/compose.yaml up -d ;;
+  stop) docker compose -f runtime/compose.yaml stop ;;
+  status) docker compose -f runtime/compose.yaml ps ;;
+  wp) shift; docker compose -f runtime/compose.yaml exec -T -u www-data web wp "$@" ;;
+  *) echo 'Uso: scripts/local-site start|stop|status|wp ...'; exit 2 ;;
+esac

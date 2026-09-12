@@ -1,0 +1,14 @@
+{
+  "wordpress:php8.2-apache": [
+    "wordpress@sha256:75c755113d8644a08519270d77e0c8bd14b7bea23910e3d165056870093869a2"
+  ],
+  "wordpress:cli-php8.2": [
+    "wordpress@sha256:837d55d02196b5f4c92d236317c6d089ab1471348b31d1708888d444a0390979"
+  ],
+  "mariadb:10.6.27": [
+    "mariadb@sha256:4066a44f4a0143c310fbe6972c254bbbb7a844a2be1418831a987fdbbc8ff8bd"
+  ],
+  "public.ecr.aws/supabase/mailpit:v1.30.2": [
+    "public.ecr.aws/supabase/mailpit@sha256:37a38e48e9338cd7e89dfeb487f37b02ebfcd9cb23111bed2d345e79d37d6dd6"
+  ]
+}

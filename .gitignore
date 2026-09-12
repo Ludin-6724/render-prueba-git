@@ -27,5 +27,8 @@ __pycache__/
 node_modules/
 .DS_Store
 
-# Versionar explícitamente el código propio en una carpeta src/ cuando se cree.
+# Web nueva (Vite): dependencias y build
+/web/node_modules/
+/web/dist/
+
 # No ejecutar git add -f sobre secretos o respaldos.

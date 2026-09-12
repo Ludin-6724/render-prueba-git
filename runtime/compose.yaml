@@ -1,0 +1,56 @@
+name: render-reference
+services:
+  db:
+    image: mariadb:10.6.27
+    environment:
+      MARIADB_DATABASE: render_local
+      MARIADB_USER: render_local
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    secrets: [db_password, db_root_password]
+    volumes:
+      - render_db:/var/lib/mysql
+    networks: [isolated]
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  web:
+    build: .
+    volumes:
+      - ../sitio-local/wordpress:/var/www/html
+      - ../private/local-evidence:/var/local-evidence
+      - ./tools:/opt/render-tools:ro
+    secrets: [db_password, admin_password]
+    networks: [isolated]
+    depends_on:
+      db: {condition: service_healthy}
+      mail: {condition: service_started}
+  mail:
+    image: public.ecr.aws/supabase/mailpit:v1.30.2
+    environment:
+      MP_DATABASE: /data/mailpit.db
+    volumes: [render_mail:/data]
+    networks: [isolated]
+  gateway:
+    image: render-reference-web:latest
+    volumes:
+      - ./proxy.conf:/etc/apache2/sites-enabled/000-default.conf:ro
+    ports: ["127.0.0.1:8087:80", "127.0.0.1:8027:8025"]
+    networks: [access, isolated]
+    depends_on: [web, mail]
+networks:
+  access:
+  isolated:
+    internal: true
+volumes:
+  render_db:
+  render_mail:
+secrets:
+  db_password:
+    file: ../private/local-secrets/db_password
+  db_root_password:
+    file: ../private/local-secrets/db_root_password
+  admin_password:
+    file: ../private/local-secrets/admin_password
