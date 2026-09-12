@@ -1,0 +1,14 @@
+{
+  "mobile": {
+    "width": 960,
+    "height": 540,
+    "frames": 121,
+    "bytes": 4982118
+  },
+  "desktop": {
+    "width": 1280,
+    "height": 720,
+    "frames": 121,
+    "bytes": 7563990
+  }
+}
