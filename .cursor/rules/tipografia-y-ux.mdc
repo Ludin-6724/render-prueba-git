@@ -1,0 +1,16 @@
+---
+description: Tipografía uniforme y UX en la web nueva de RENDER
+globs: "**/*.{html,css,js,scss,php,svg,md}"
+alwaysApply: false
+---
+
+# Tipografía y UX
+
+Antes de HTML/CSS/JS de la web nueva, leer `.cursor/skills/render-tipo-ux/SKILL.md` y `docs/REQUISITOS_RECONSTRUCCION.md`.
+
+- Menú y overlay: `text-transform: uppercase` en todos los ítems, incluido Portfolio.
+- Escala por roles (display, título, cuerpo, meta, nav, CTA). Prohibido `font-size` suelto.
+- Máximo dos familias. Texto en HTML, nunca quemado en fotos del equipo.
+- Cuerpo ≥ 16px, contraste crema sobre `#0B0B0B`, foco visible, tap ≥ 44px.
+- Un solo formulario de cotización con labels reales; `prefers-reduced-motion` respeta intro y scroll.
+- Verificar el flujo en el navegador (escritorio y 390px), no solo el aspecto.

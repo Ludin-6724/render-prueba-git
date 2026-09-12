@@ -8,6 +8,8 @@ Actualización expresa de Ludin: no quiere desarrollar la nueva web con WordPres
 
 Mantener el dominio, el alojamiento contratado y Google Workspace. Diseñar una entrega compatible con archivos estáticos y PHP; no asumir Node.js disponible en producción. Evaluar Git para actualizar el código, separando repositorio y artefactos públicos. La prueba posterior autorizada confirmó escritura mediante MCP en el repositorio público de GitHub `Ludin-6724/render-prueba-git` y actualización de la rama `main` en `/home/rendermultimedia/repositories/render-prueba-github`, fuera de `public_html`. Se verificaron el commit y el contenido exacto de dos archivos de prueba. No se han probado repositorios privados, push directo a cPanel, SSH ni despliegue. Consultar `docs/FLUJO_PUBLICACION.md`. No publicar ni modificar producción como consecuencia de esta prueba.
 
+Al construir o revisar la web nueva, aplicar las skills de diseño/UX del proyecto: `frontend-design`, `impeccable` (incluido typeset), `web-design-guidelines`, `ui-ux-pro-max` y `.cursor/skills/render-tipo-ux`. Menú en mayúsculas, escala tipográfica por roles y verificación de flujos en el navegador.
+
 ## Objetivo y contexto
 
 El responsable es Ludin Guerra, de VISCODE. El cliente es RENDER Multimedia, empresa audiovisual. La tarea inicial es inspeccionar el alojamiento y recuperar una copia local del sitio para planificar modificaciones con herramientas de desarrollo asistido. Comunicarse en español claro y práctico.
