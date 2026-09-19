@@ -23,7 +23,7 @@ async function stepTo(page, expected, dir = 1) {
   for (let i = 0; i < 48; i++) {
     if (await page.locator('.scroll-morph').getAttribute('data-act') === String(expected)) break
     await page.mouse.wheel(0, dir > 0 ? 400 : -400)
-    await page.waitForTimeout(560)
+    await page.waitForTimeout(700)
   }
   await act(page, expected)
   const service = ['audiovisuales', 'audiovisuales', 'marketing', 'diseno'][expected]
@@ -76,9 +76,16 @@ try {
   await stepTo(page, 2)
   await stepTo(page, 3)
   await page.screenshot({ path: '/tmp/render-morph-desktop-design.png' })
+  assert.equal(await page.locator('.morph-ring').getAttribute('data-photo-count'), '3')
   const beforeLeave = await page.evaluate(() => scrollY)
-  await page.mouse.wheel(0, 400)
-  await page.waitForTimeout(250)
+  let stayed = 0
+  for (let i = 0; i < 6; i++) {
+    await page.mouse.wheel(0, 400)
+    await page.waitForTimeout(350)
+    if (await page.evaluate(() => scrollY) > beforeLeave) break
+    stayed++
+  }
+  assert(stayed >= 1, 'Design keeps at least one extra slide before leaving')
   assert((await page.evaluate(() => scrollY)) > beforeLeave, 'Last design photo releases into the page')
   assert.equal(await page.locator('#after-scroll-morph + section').getAttribute('id'), 'portafolio')
   await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }))

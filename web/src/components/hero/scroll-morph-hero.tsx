@@ -19,6 +19,7 @@ const CAMERA_MOTION_END = 1260
 const PHOTO_HANDOFF_START = 1380
 const PHOTO_HANDOFF_END = 1640
 const DESIGN_IMAGES = images.filter(image => image.service === 'diseno')
+const uniqueDesign = DESIGN_IMAGES.filter((image, index, list) => list.findIndex(item => item.src === image.src) === index)
 const FEATURED_IMAGES = {
   // Keep the fold ring dense, but make the audiovisual act a short, curated
   // sequence so the handoff reaches Marketing without exhausting the scroll.
@@ -28,7 +29,8 @@ const FEATURED_IMAGES = {
   ],
   marketing: images.filter(image => image.service === 'marketing').sort((a, b) =>
     Number(b.src.endsWith('marketing-01.webp')) - Number(a.src.endsWith('marketing-01.webp'))),
-  diseno: DESIGN_IMAGES.filter((image, index, list) => list.findIndex(item => item.src === image.src) === index),
+  // Until more design photos exist, repeat the available artwork so the act has three slides.
+  diseno: uniqueDesign.length >= 3 ? uniqueDesign : Array.from({ length: 3 }, (_, i) => uniqueDesign[i % Math.max(1, uniqueDesign.length)]),
 }
 const MARKETING_START = PHOTO_HANDOFF_END + FEATURED_IMAGES.audiovisuales.length * 100 + 80
 const DESIGN_START = MARKETING_START + 280 + FEATURED_IMAGES.marketing.length * 120 + 80
@@ -589,7 +591,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   const cameraTop = leftoverTop + Math.max(0, (leftover - cameraHeight) / 2)
   const service = SERVICES[Math.max(0, act - 1)]
   const featuredImages = FEATURED_IMAGES[service.id as keyof typeof FEATURED_IMAGES]
-  const photoStart = act === 1 ? PHOTO_HANDOFF_END : service.start + 320
+  const photoStart = act === 1 ? PHOTO_HANDOFF_END : act === 3 ? DESIGN_START : service.start + 320
   const photoStep = act === 1 ? 100 : 120
   const featuredIndex = Math.min(featuredImages.length - 1, Math.max(0, Math.floor((photoScroll - photoStart) / photoStep)))
   const featuredAreaTop = copyTop + copyHeight + 20
