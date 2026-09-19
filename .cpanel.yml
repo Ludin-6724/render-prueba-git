@@ -1,0 +1,7 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/rendermultimedia/public_html
+    - /bin/cp -f index.html 404.html contacto.php robots.txt sitemap.xml $DEPLOYPATH/
+    - /bin/cp -f .htaccess $DEPLOYPATH/.htaccess
+    - /bin/cp -R assets brand videos render-visual thank-you-page servicios comercial ongs nosotros contacto $DEPLOYPATH/
