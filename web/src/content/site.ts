@@ -244,38 +244,27 @@ export const destacadosInicio = [
   { youtube: 'xzurNLvOF2w', titulo: 'Trabajo destacado' },
 ]
 
-// Author attribution verified against the original local HTML; see docs/AUTORES_TESTIMONIOS.md.
-export const testimonios: { quote: string; name: string | null; company: string | null; source: string }[] = [
+// Google no expuso la ficha compartida durante la migración; no se inventan
+// ratings. Los textos y autores provienen de la copia local de la home.
+export const reviews: { quote: string; author: string; rating: number | null; source: 'Google' }[] = [
   {
-    "quote": "Trabajar con Render Media ha sido una excelente experiencia. Su equipo entendió mis necesidades y creó estrategias efectivas que impulsaron el crecimiento de mi negocio. Son profesionales, creativos y siempre están atentos a los detalles. Además, su atención al cliente es de primera. ¡Definitivamente los recomiendo para cualquier proyecto de marketing!",
-    "name": "Zoom Media",
-    "company": null,
-    "source": "private/local-evidence/home-first.html:31 (et_pb_slide_0)"
+    quote: 'Trabajar con Render Media ha sido una excelente experiencia. Su equipo entendió mis necesidades y creó estrategias efectivas que impulsaron el crecimiento de mi negocio. Son profesionales, creativos y siempre están atentos a los detalles. Además, su atención al cliente es de primera. ¡Definitivamente los recomiendo para cualquier proyecto de marketing!',
+    author: 'Zoom Media',
+    rating: null,
+    source: 'Google',
   },
   {
-    "quote": "Los recomiendo, tanto su equipo como personal es muy profesional.",
-    "name": "Men’s Boutique",
-    "company": null,
-    "source": "private/local-evidence/home-first.html:31 (et_pb_slide_1)"
+    quote: 'Los recomiendo, tanto su equipo como personal es muy profesional. 👌🏼',
+    author: 'Men’s Boutique',
+    rating: null,
+    source: 'Google',
   },
   {
-    "quote": "Podcasts, Videos Corporativos, Pre-Roll's, Videos/Fotografía de Productos, etc., para esto y más, en Render encontraran Profesionalismo, Creatividad, Compromiso y un Equipo Humano capaz para cualquier proyecto multimedia.",
-    "name": "Eddy Osorio",
-    "company": null,
-    "source": "private/local-evidence/home-first.html:31 (et_pb_slide_2)"
+    quote: 'Podcasts, Videos Corporativos, Pre-Roll’s, Videos/Fotografía de Productos, etc., para esto y más, en Render encontrarán Profesionalismo, Creatividad, Compromiso y un Equipo Humano capaz para cualquier proyecto multimedia.',
+    author: 'Eddy Osorio',
+    rating: null,
+    source: 'Google',
   },
-  {
-    "quote": "El mejor proveedor de servicios Multimedia, son profesionales y brindan productos de calidad, son amables y proactivos en los proyectos que trabajan, recomendados",
-    "name": "Wester Lopez",
-    "company": null,
-    "source": "private/local-evidence/home-first.html:31 (et_pb_slide_3)"
-  },
-  {
-    "quote": "Un proveedor con excelente atención, puntualidad y profesionalismo, muy recomendado para eventos donde necesitas que todo quede con calidad, el trabajo que realizan se ve al momento de recibirlo porque se distingue y resalta. Muy recomendado",
-    "name": "José Manuel Chigua",
-    "company": null,
-    "source": "private/local-evidence/home-first.html:31 (et_pb_slide_4)"
-  }
 ]
 
 export const team = [

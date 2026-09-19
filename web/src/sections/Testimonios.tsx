@@ -2,7 +2,7 @@ import { useRef, useState, type MouseEvent } from 'react'
 import { AnimatePresence, motion, useMotionValue, useSpring } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react'
 import { useCarouselAutoplay } from '@/hooks/useCarouselAutoplay'
-import { testimonios } from '@/content/site'
+import { reviews } from '@/content/site'
 
 function initials(name: string | null) {
   return (name ?? 'Cliente de RENDER').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
@@ -24,7 +24,7 @@ export default function Testimonios() {
   const cursorX = useSpring(useMotionValue(0), { damping: 25, stiffness: 150 })
   const cursorY = useSpring(useMotionValue(0), { damping: 25, stiffness: 150 })
 
-  function go(dir: number) { setIndex((current) => (current + dir + testimonios.length) % testimonios.length) }
+  function go(dir: number) { setIndex((current) => (current + dir + reviews.length) % reviews.length) }
   const autoplay = useCarouselAutoplay(carouselRef, () => go(1), false, 5500)
 
   function handleMouseMove(event: MouseEvent<HTMLDivElement>) {
@@ -34,7 +34,7 @@ export default function Testimonios() {
     cursorY.set(event.clientY - rect.top)
   }
 
-  const current = testimonios[index]
+  const current = reviews[index]
 
   return (
     <section className="testimonials-section" aria-labelledby="testimonials-title">
@@ -44,8 +44,8 @@ export default function Testimonios() {
           if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); go(event.key === 'ArrowRight' ? 1 : -1) }
         }}>
           <motion.div className="testimonial-magnetic-cursor" style={{ x: cursorX, y: cursorY }} animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : .4 }} transition={{ type: 'spring', damping: 20, stiffness: 200 }} aria-hidden="true">NEXT</motion.div>
-          <div className="testimonial-index" aria-hidden="true"><AnimatePresence mode="wait"><motion.span key={index} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>{String(index + 1).padStart(2, '0')}</motion.span></AnimatePresence><span> / {String(testimonios.length).padStart(2, '0')}</span></div>
-          <div className="testimonial-avatar-stack" aria-hidden="true">{testimonios.map((testimonial, i) => <span key={`${testimonial.name}-${i}`} className={i === index ? 'is-active' : ''}>{initials(testimonial.name)}</span>)}</div>
+          <div className="testimonial-index" aria-hidden="true"><AnimatePresence mode="wait"><motion.span key={index} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>{String(index + 1).padStart(2, '0')}</motion.span></AnimatePresence><span> / {String(reviews.length).padStart(2, '0')}</span></div>
+          <div className="testimonial-avatar-stack" aria-hidden="true">{reviews.map((review, i) => <span key={`${review.author}-${i}`} className={i === index ? 'is-active' : ''}>{initials(review.author)}</span>)}</div>
           <div className="testimonials-quote" onPointerDown={(event) => { drag.current = { x: event.clientX, y: event.clientY } }} onPointerCancel={() => { drag.current = null }} onPointerUp={(event) => {
             if (!drag.current) return
             const dx = event.clientX - drag.current.x
@@ -55,14 +55,15 @@ export default function Testimonios() {
           }}>
             <AnimatePresence mode="wait"><motion.figure key={index} className="quote-in" aria-live={autoplay.running ? 'off' : 'polite'} aria-atomic="true" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .28 }}>
               <blockquote>“<SplitQuote text={current.quote} />”</blockquote>
-              <figcaption><span className="testimonial-author-mark" aria-hidden="true">{initials(current.name)}</span><span><strong>{current.name || 'Cliente de RENDER'}</strong>{current.company && <small>{current.company}</small>}</span></figcaption>
+              <figcaption><span className="testimonial-author-mark" aria-hidden="true">{initials(current.author)}</span><span><strong>{current.author}</strong><small>{current.source}{current.rating ? ` · ${current.rating}/5` : ''}</small></span></figcaption>
             </motion.figure></AnimatePresence>
           </div>
-          <div className="testimonial-progress" aria-hidden="true"><motion.span animate={{ width: `${((index + 1) / testimonios.length) * 100}%` }} transition={{ duration: .5, ease: [0.22, 1, 0.36, 1] }} /></div>
+          <div className="testimonial-progress" aria-hidden="true"><motion.span animate={{ width: `${((index + 1) / reviews.length) * 100}%` }} transition={{ duration: .5, ease: [0.22, 1, 0.36, 1] }} /></div>
           <div className="testimonials-controls">
             {!autoplay.reduced && <button type="button" className="autoplay-control" aria-label={`${autoplay.paused ? 'Activar' : 'Pausar'} avance automático de testimonios`} aria-pressed={autoplay.paused} onClick={autoplay.toggle}>{autoplay.paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}<span>{autoplay.paused ? 'Activar' : 'Pausar'}</span></button>}
             <div className="flex gap-2"><button className="circle-control" type="button" aria-label="Testimonio anterior" onClick={() => go(-1)}><ArrowLeft size={20} aria-hidden="true" /></button><button className="circle-control" type="button" aria-label="Testimonio siguiente" onClick={() => go(1)}><ArrowRight size={20} aria-hidden="true" /></button></div>
           </div>
+          <a className="testimonial-google-link" href="https://share.google/Sohg1aNIpuhy1GZsO" target="_blank" rel="noreferrer">Ver en Google <span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </section>
