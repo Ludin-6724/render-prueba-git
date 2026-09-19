@@ -53,11 +53,13 @@ const SCROLL_STEPS = [
   ...FEATURED_IMAGES.diseno.slice(1).map((_, index) => DESIGN_START + (index + 1) * 120),
   MAX_SCROLL,
 ].filter((point, index, points) => index === 0 || point > points[index - 1])
-const LAST_DESIGN_STEP = DESIGN_START + (FEATURED_IMAGES.diseno.length - 1) * 120
-// Skip only the empty dock-only beat. Keep the camera turn and photo handoff
-// as their own steps so a phone swipe does not jump 121 frames at once.
-const MOBILE_SCROLL_STEPS = SCROLL_STEPS.filter(point => point !== AUDIOVISUAL_START && point !== PHOTO_HANDOFF_START)
-const stepsForWidth = (width: number) => width < 768 ? MOBILE_SCROLL_STEPS : SCROLL_STEPS
+// Same camera beats on phone and desktop: appear, half turn, full turn, then
+// one spring into the photos. Skip the empty dock-only beat on small screens.
+const stepsForWidth = (width: number) => SCROLL_STEPS.filter(point => {
+  if (point === PHOTO_HANDOFF_START) return false
+  if (width < 768 && point === AUDIOVISUAL_START) return false
+  return true
+})
 const IMG_WIDTH = 60
 const IMG_HEIGHT = 85
 const LOGO = '/brand/logo.svg'
@@ -192,6 +194,9 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   const rewinding = useRef(false)
   const rewindAnimation = useRef<ReturnType<typeof animate> | null>(null)
   const scrollRef = useRef(0)
+  const designSlideRef = useRef(0)
+  const designVisibleSwipesRef = useRef(0)
+  const designHoldUntilRef = useRef(0)
   const [containerSize, setContainerSize] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
   const [act, setAct] = useState(0)
   const [showCamera, setShowCamera] = useState(true)
@@ -266,6 +271,9 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     rewindAnimation.current?.stop()
     rewinding.current = false
     scrollRef.current = 0
+    designSlideRef.current = 0
+    designVisibleSwipesRef.current = 0
+    designHoldUntilRef.current = 0
     virtualScroll.jump(0)
     presentationScroll.jump(0)
     dock.jump(0)
@@ -293,6 +301,9 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       rewindAnimation.current?.stop()
       rewinding.current = false
       scrollRef.current = 0
+      designSlideRef.current = 0
+      designVisibleSwipesRef.current = 0
+      designHoldUntilRef.current = 0
       virtualScroll.set(0)
       brandTime.set(0)
       setIdleAngle(0)
@@ -434,7 +445,6 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       rewinding.current = false
       const requested = scrollRef.current + delta
       const next = clamp(requested)
-      const leftover = requested - next
       if (next !== scrollRef.current) {
         pinHero()
         scrollRef.current = next
@@ -442,12 +452,6 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
         holdPage(next > 0 && next < MAX_SCROLL)
       } else if (next > 0 && next < MAX_SCROLL) {
         pinHero()
-      }
-      // Hand off leftover pixels 1:1. Never jump a whole viewport — that was
-      // dropping the phone into Portfolio and then pinning back up.
-      if (leftover > 0 && next >= MAX_SCROLL) {
-        holdPage(false)
-        window.scrollBy({ top: leftover, behavior: 'instant' })
       }
     }
 
@@ -459,7 +463,8 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     }
     let stepLocked = false
     let stepUnlockTimer = 0
-    let designEnteredAt = 0
+    const DESIGN_SLIDE_COUNT = FEATURED_IMAGES.diseno.length
+    const designPoint = (slide: number) => DESIGN_START + (slide - 1) * 120
     const releaseToPage = (pixels: number) => {
       holdPage(false)
       const distance = Math.max(120, pixels)
@@ -474,26 +479,48 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       const current = scrollRef.current
       const index = nearestStep(current)
       const targetIndex = Math.max(0, Math.min(points.length - 1, index + direction))
-      let target = points[targetIndex]
-      const enteringDesign = direction > 0 && current < DESIGN_START && target >= DESIGN_START
-      if (enteringDesign) {
-        target = DESIGN_START
-        designEnteredAt = performance.now()
-      }
-      if (!enteringDesign && direction > 0 && current >= DESIGN_START && current < LAST_DESIGN_STEP && performance.now() - designEnteredAt < 500) {
-        if (event.cancelable) event.preventDefault()
-        pinHero()
-        return
-      }
-      const leaving = direction > 0 && current >= LAST_DESIGN_STEP
-      if (leaving) {
+      const rawTarget = points[targetIndex]
+      const reachingDesign = current >= DESIGN_START || rawTarget >= DESIGN_START
+      if (direction > 0 && reachingDesign && current < MAX_SCROLL) {
+        const now = performance.now()
+        if (designSlideRef.current < 1) {
+          designSlideRef.current = 1
+          designVisibleSwipesRef.current = 0
+          designHoldUntilRef.current = now + 800
+          advance(DESIGN_START - current, event, force)
+          return
+        }
+        if (now < designHoldUntilRef.current) {
+          if (event.cancelable) event.preventDefault()
+          pinHero()
+          return
+        }
+        if (designVisibleSwipesRef.current < DESIGN_SLIDE_COUNT) {
+          designVisibleSwipesRef.current += 1
+          designSlideRef.current = Math.min(DESIGN_SLIDE_COUNT, 1 + designVisibleSwipesRef.current)
+          advance(designPoint(designSlideRef.current) - current, event, force)
+          return
+        }
         if (event.cancelable) event.preventDefault()
         scrollRef.current = MAX_SCROLL
         virtualScroll.set(MAX_SCROLL)
         releaseToPage(leftover)
         return
       }
-      if (target === current) return
+      if (direction < 0 && (current >= DESIGN_START || designSlideRef.current > 0)) {
+        if (designSlideRef.current > 1) {
+          designSlideRef.current -= 1
+          advance(designPoint(designSlideRef.current) - current, event, force)
+          return
+        }
+        designSlideRef.current = 0
+        designVisibleSwipesRef.current = 0
+      }
+      const target = rawTarget
+      if (target === current) {
+        if (direction > 0 && current >= MAX_SCROLL) releaseToPage(leftover)
+        return
+      }
       advance(target - current, event, force)
     }
 
@@ -515,7 +542,8 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       if (stepLocked) return
       stepLocked = true
       window.clearTimeout(stepUnlockTimer)
-      stepUnlockTimer = window.setTimeout(() => { stepLocked = false }, 300)
+      const inCamera = scrollRef.current >= CAMERA_MOTION_START && scrollRef.current < PHOTO_HANDOFF_END
+      stepUnlockTimer = window.setTimeout(() => { stepLocked = false }, inCamera ? 520 : 320)
       moveOneStep(direction, event, true, Math.abs(event.deltaY))
     }
     let lastTouchY = 0
