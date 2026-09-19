@@ -20,6 +20,7 @@ html.morph-holding, html.morph-holding body {
 }
 .scroll-morph:focus-visible { outline: 2px solid #0f0f0f; outline-offset: -4px; }
 .morph-ring { position: absolute; z-index: 0; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.scroll-morph[data-act='0'] .morph-ring { will-change: transform; }
 .morph-card { position: absolute; border: 0; padding: 0; background: transparent; pointer-events: auto; cursor: zoom-in; }
 .morph-card:disabled { pointer-events: none; }
 .morph-card:focus-visible { outline: 2px solid #f7ac42; outline-offset: 5px; border-radius: 12px; }

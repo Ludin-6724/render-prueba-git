@@ -217,7 +217,10 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     }
     const time = brandTime.get() + Math.min(delta, 50) / 1000
     brandTime.set(time)
-    if (time >= 1.4) setIdleAngle(angle => angle + Math.min(delta, 50) / 1000 * 5)
+    if (time >= 1.4) {
+      const speed = containerSize.width < 768 ? 22 : 12
+      setIdleAngle(angle => angle + Math.min(delta, 50) / 1000 * speed)
+    }
   })
   // Original circle → arc interpolation, 40/20 springs and continuous scroll rotation.
   const morphProgress = useTransform(virtualScroll, [AUDIOVISUAL_START, 650], [0, 1])
@@ -450,31 +453,53 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       return points.reduce((best, point, index) =>
         Math.abs(point - value) < Math.abs(points[best] - value) ? index : best, 0)
     }
-    const moveOneStep = (direction: 1 | -1, event: Event, force = false) => {
+    let stepLocked = false
+    let stepUnlockTimer = 0
+    const moveOneStep = (direction: 1 | -1, event: Event, force = false, leftover = 0) => {
       const points = steps()
       const current = scrollRef.current
       const index = nearestStep(current)
       const targetIndex = Math.max(0, Math.min(points.length - 1, index + direction))
       const target = points[targetIndex]
-      advance(target === current ? (direction > 0 ? MAX_SCROLL + 1 : -1) : target - current, event, force)
+      if (target === current) {
+        if (direction > 0 && current >= MAX_SCROLL) {
+          holdPage(false)
+          window.scrollBy({ top: leftover > 0 ? leftover : 96, behavior: 'instant' })
+        }
+        return
+      }
+      advance(target - current, event, force)
     }
 
     const handleWheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return
       if (Math.abs(event.deltaY) < 1) return
-      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? container.clientHeight : 1
-      advance(event.deltaY * unit, event)
+      const rect = container.getBoundingClientRect()
+      const direction: 1 | -1 = event.deltaY > 0 ? 1 : -1
+      if (!ownsGesture(rect, event.deltaY)) {
+        if (scrollRef.current >= MAX_SCROLL && direction > 0 && rect.bottom > 0) {
+          if (event.cancelable) event.preventDefault()
+          holdPage(false)
+          window.scrollBy({ top: event.deltaY, behavior: 'instant' })
+        }
+        return
+      }
+      if (event.cancelable) event.preventDefault()
+      pinHero()
+      if (stepLocked) return
+      stepLocked = true
+      window.clearTimeout(stepUnlockTimer)
+      stepUnlockTimer = window.setTimeout(() => { stepLocked = false }, 300)
+      moveOneStep(direction, event, true, Math.abs(event.deltaY))
     }
     let lastTouchY = 0
     let lastTouchX = 0
-    let lastTouchTime = 0
-    let touchVelocity = 0
+    let gestureY = 0
     let axisLocked: 'x' | 'y' | null = null
     const handleTouchStart = (event: TouchEvent) => {
       lastTouchY = event.touches[0].clientY
       lastTouchX = event.touches[0].clientX
-      lastTouchTime = performance.now()
-      touchVelocity = 0
+      gestureY = 0
       axisLocked = null
       if (scrollRef.current > 0 && scrollRef.current < MAX_SCROLL) pinHero()
     }
@@ -485,28 +510,26 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       const deltaY = lastTouchY - touch.clientY
       if (!axisLocked && Math.hypot(deltaX, deltaY) > 6) axisLocked = Math.abs(deltaY) >= Math.abs(deltaX) ? 'y' : 'x'
       if (axisLocked === 'x') return
-      const now = performance.now()
-      const dt = Math.max(8, now - lastTouchTime)
-      touchVelocity = deltaY / dt
+      const rect = container.getBoundingClientRect()
+      if (!ownsGesture(rect, deltaY)) {
+        if (scrollRef.current >= MAX_SCROLL && deltaY > 0 && rect.bottom > 0) {
+          event.preventDefault()
+          holdPage(false)
+          window.scrollBy({ top: deltaY, behavior: 'instant' })
+          lastTouchY = touch.clientY
+        }
+        return
+      }
+      event.preventDefault()
+      pinHero()
+      gestureY += deltaY
       lastTouchY = touch.clientY
       lastTouchX = touch.clientX
-      lastTouchTime = now
-      advance(deltaY, event, true)
     }
-    const handleTouchEnd = () => {
-      if (axisLocked !== 'y') return
-      if (scrollRef.current <= 0 || scrollRef.current >= MAX_SCROLL) return
-      const travel = Math.max(-420, Math.min(420, touchVelocity * 220))
-      if (Math.abs(travel) < 28) return
-      rewindAnimation.current?.stop()
-      const target = clamp(scrollRef.current + travel)
-      rewindAnimation.current = animate(virtualScroll, target, {
-        duration: 0.42, ease: [0.16, 1, 0.3, 1],
-        onUpdate: value => {
-          scrollRef.current = value
-          holdPage(value > 0 && value < MAX_SCROLL)
-        },
-      })
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (axisLocked !== 'y' || Math.abs(gestureY) < 28) return
+      const direction: 1 | -1 = gestureY > 0 ? 1 : -1
+      moveOneStep(direction, event, true, Math.abs(gestureY))
     }
     const handleKey = (event: KeyboardEvent) => {
       if (event.target !== container || event.ctrlKey || event.metaKey || event.altKey) return
@@ -530,6 +553,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     container.addEventListener('mouseleave', resetMouse)
     return () => {
       holdPage(false)
+      window.clearTimeout(stepUnlockTimer)
       window.removeEventListener('wheel', handleWheel)
       window.removeEventListener('touchstart', handleTouchStart)
       window.removeEventListener('touchmove', handleTouchMove)
