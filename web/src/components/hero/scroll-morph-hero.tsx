@@ -34,18 +34,22 @@ const FEATURED_IMAGES = {
 const MARKETING_START = PHOTO_HANDOFF_END + FEATURED_IMAGES.audiovisuales.length * 100 + 80
 const DESIGN_START = MARKETING_START + 280 + FEATURED_IMAGES.marketing.length * 120 + 80
 const MAX_SCROLL = DESIGN_START + 280 + Math.max(320, FEATURED_IMAGES.diseno.length * 120)
-const MOBILE_STEPS = [
+// Every input device follows the same discrete waypoints. Keeping one list for
+// wheel and touch prevents a large delta or a quick flick from skipping photos.
+const SCROLL_STEPS = [
   0,
-  AUDIOVISUAL_START + 40,
-  CAMERA_MOTION_START + 220,
+  AUDIOVISUAL_START,
+  CAMERA_MOTION_START,
+  CAMERA_MOTION_END,
+  PHOTO_HANDOFF_START,
   PHOTO_HANDOFF_END,
-  ...FEATURED_IMAGES.audiovisuales.map((_, index) => PHOTO_HANDOFF_END + index * 100),
-  MARKETING_START + 40,
+  ...FEATURED_IMAGES.audiovisuales.slice(1).map((_, index) => PHOTO_HANDOFF_END + (index + 1) * 100),
+  MARKETING_START,
   ...FEATURED_IMAGES.marketing.map((_, index) => MARKETING_START + 320 + index * 120),
-  DESIGN_START + 40,
+  DESIGN_START,
   ...FEATURED_IMAGES.diseno.map((_, index) => DESIGN_START + 320 + index * 120),
   MAX_SCROLL,
-]
+].filter((point, index, points) => index === 0 || point > points[index - 1])
 const IMG_WIDTH = 60
 const IMG_HEIGHT = 85
 const LOGO = '/brand/logo.svg'
@@ -191,6 +195,8 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   const inView = useRef(true)
   const hoveringPhoto = useRef(false)
   const [ringInteractive, setRingInteractive] = useState(true)
+  const stepLocked = useRef(false)
+  const stepUnlockTimer = useRef<number | null>(null)
   const [idleAngle, setIdleAngle] = useState(0)
   useAnimationFrame((_, delta) => {
     if (document.hidden || !inView.current || photoOpen || hoveringPhoto.current) return
@@ -368,7 +374,15 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       }
       const requested = scrollRef.current + movement
       const next = clamp(requested)
-      if (next === scrollRef.current) return
+      if (next === scrollRef.current) {
+        // At either end, hand control back to the document so the next section
+        // is reachable without a dead wheel/touch gesture.
+        if (requested > MAX_SCROLL || requested < 0) {
+          if (event.cancelable) event.preventDefault()
+          window.scrollBy({ top: requested > MAX_SCROLL ? container.clientHeight * 0.8 : -container.clientHeight * 0.8, behavior: 'smooth' })
+        }
+        return
+      }
       if (event.cancelable) event.preventDefault()
       rewindAnimation.current?.stop()
       rewinding.current = false
@@ -380,11 +394,28 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       }
     }
 
+    const nearestStep = (value: number) => SCROLL_STEPS.reduce((best, point, index) =>
+      Math.abs(point - value) < Math.abs(SCROLL_STEPS[best] - value) ? index : best, 0)
+    const moveOneStep = (direction: 1 | -1, event: Event, force = false) => {
+      if (stepLocked.current || photoOpen) return
+      const current = scrollRef.current
+      const index = nearestStep(current)
+      const targetIndex = Math.max(0, Math.min(SCROLL_STEPS.length - 1, index + direction))
+      const target = SCROLL_STEPS[targetIndex]
+      if (target === current) {
+        advance(direction > 0 ? MAX_SCROLL + 1 : -1, event, force)
+        return
+      }
+      stepLocked.current = true
+      if (stepUnlockTimer.current !== null) window.clearTimeout(stepUnlockTimer.current)
+      stepUnlockTimer.current = window.setTimeout(() => { stepLocked.current = false }, 520)
+      advance(target - current, event, force)
+    }
+
     const handleWheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return
-      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? container.clientHeight : 1
-      const delta = event.deltaY * unit
-      advance(Math.max(-260, Math.min(260, delta)), event)
+      if (Math.abs(event.deltaY) < 1) return
+      moveOneStep(event.deltaY > 0 ? 1 : -1, event)
     }
     let touchStartY = 0
     let touchStartX = 0
@@ -408,22 +439,16 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       if (!touchMoved) return
       const deltaY = touchStartY - (event.changedTouches[0]?.clientY ?? touchStartY)
       if (Math.abs(deltaY) < 24) return
-      const current = scrollRef.current
-      const nearest = MOBILE_STEPS.reduce((best, point, index) => Math.abs(point - current) < Math.abs(MOBILE_STEPS[best] - current) ? index : best, 0)
       const direction = deltaY > 0 ? 1 : -1
-      const targetIndex = Math.max(0, Math.min(MOBILE_STEPS.length - 1, nearest + direction))
-      const target = MOBILE_STEPS[targetIndex]
-      if (target === current) {
-        window.scrollBy({ top: direction > 0 ? container.clientHeight * .65 : -container.clientHeight * .65, behavior: 'smooth' })
-        return
-      }
-      advance(target - current, event, true)
+      moveOneStep(direction, event, true)
       touchMoved = false
     }
     const handleKey = (event: KeyboardEvent) => {
       if (event.target !== container || event.ctrlKey || event.metaKey || event.altKey) return
-      const delta = ({ ArrowDown: 100, ArrowUp: -100, PageDown: 400, PageUp: -400, ' ': event.shiftKey ? -400 : 400, Home: -MAX_SCROLL, End: MAX_SCROLL } as Record<string, number>)[event.key]
-      if (delta !== undefined) advance(delta, event)
+      const direction = ({ ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1, ' ': event.shiftKey ? -1 : 1 } as Record<string, 1 | -1 | undefined>)[event.key]
+      if (direction !== undefined) moveOneStep(direction, event)
+      if (event.key === 'Home') advance(-MAX_SCROLL, event)
+      if (event.key === 'End') advance(MAX_SCROLL, event)
     }
     const handleMouseMove = (event: MouseEvent) => {
       if (hoveringPhoto.current || photoOpen) return
@@ -443,6 +468,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       window.removeEventListener('touchstart', handleTouchStart)
       window.removeEventListener('touchmove', handleTouchMove)
       window.removeEventListener('touchend', handleTouchEnd)
+      if (stepUnlockTimer.current !== null) window.clearTimeout(stepUnlockTimer.current)
       container.removeEventListener('keydown', handleKey)
       container.removeEventListener('mousemove', handleMouseMove)
       container.removeEventListener('mouseleave', resetMouse)
