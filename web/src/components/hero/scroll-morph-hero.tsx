@@ -199,8 +199,6 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   const inView = useRef(true)
   const hoveringPhoto = useRef(false)
   const [ringInteractive, setRingInteractive] = useState(true)
-  const stepLocked = useRef(false)
-  const stepUnlockTimer = useRef<number | null>(null)
   const [idleAngle, setIdleAngle] = useState(0)
   useAnimationFrame((_, delta) => {
     if (document.hidden || !inView.current || photoOpen || hoveringPhoto.current) return
@@ -364,7 +362,9 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     visibility.observe(container)
     const resetIfLeftBelow = () => {
       const rect = container.getBoundingClientRect()
-      if (rect.bottom < -8) snapToIntroRef.current()
+      // Only reset after a committed leave. A short leak used to snap the
+      // timeline to intro and yank the phone back to the logo.
+      if (rect.bottom < -window.innerHeight * 0.4) snapToIntroRef.current()
     }
     window.addEventListener('scroll', resetIfLeftBelow, { passive: true })
     return () => {
@@ -394,47 +394,53 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    // Local virtual scroll, as in the original. Release the document at both ends.
-    // Only capture when the section fills the area below the existing navigation.
+    const RELEASE_SLACK = 64
+    const holdPage = (holding: boolean) => document.documentElement.classList.toggle('morph-holding', holding)
+    const pinHero = () => {
+      const rect = container.getBoundingClientRect()
+      if (Math.abs(rect.top) > 0.5) window.scrollTo({ top: Math.max(0, window.scrollY + rect.top), behavior: 'instant' })
+    }
+    const ownsGesture = (rect: DOMRect, delta: number) => {
+      if (photoOpen) return false
+      if (rect.bottom <= 0 || rect.top >= window.innerHeight) return false
+      if (scrollRef.current > 0 && scrollRef.current < MAX_SCROLL) return true
+      if (scrollRef.current <= 0) return delta > 0 && rect.top < 8
+      // At the last act: keep the hero until the next section has clearly taken over.
+      if (rect.top < -RELEASE_SLACK) return delta < 0
+      return true
+    }
     const advance = (delta: number, event: Event, force = false) => {
-      if (photoOpen || (!event.cancelable && !force) || delta === 0) return
+      if (photoOpen || delta === 0) return
+      if (!force && !event.cancelable) return
       if (event.target instanceof Element && event.target.closest('header, dialog, [role="dialog"], input, textarea, select')) return
       const rect = container.getBoundingClientRect()
-      // Re-enter from below by spending the document distance first, identically
-      // for wheel and touch. Never snap the last 100px back into the hero.
-      if (rect.top > 1) {
-        // If the hero is already visible, reclaim the gesture and pin it before
-        // advancing the virtual timeline. This closes the native-scroll leak
-        // that could send the page straight to the sections below.
-        if (rect.top >= window.innerHeight) return
-        if (event.cancelable) event.preventDefault()
-      }
-      let movement = delta
-      if (rect.top < -1) {
-        if (delta >= 0) {
+      if (!ownsGesture(rect, delta)) {
+        if (scrollRef.current >= MAX_SCROLL && delta > 0 && rect.bottom > 0) {
           if (event.cancelable) event.preventDefault()
-        } else if (-delta < -rect.top) return
-        movement = delta - rect.top
-      }
-      const requested = scrollRef.current + movement
-      const next = clamp(requested)
-      if (next === scrollRef.current) {
-        // At either end, hand control back to the document so the next section
-        // is reachable without a dead wheel/touch gesture.
-        if (requested > MAX_SCROLL || requested < 0) {
-          if (event.cancelable) event.preventDefault()
-          window.scrollBy({ top: requested > MAX_SCROLL ? container.clientHeight * 0.8 : -container.clientHeight * 0.8, behavior: 'instant' })
+          holdPage(false)
+          window.scrollBy({ top: delta, behavior: 'instant' })
         }
         return
       }
       if (event.cancelable) event.preventDefault()
       rewindAnimation.current?.stop()
       rewinding.current = false
-      window.scrollTo({ top: window.scrollY + rect.top, behavior: 'instant' })
-      scrollRef.current = next
-      virtualScroll.set(next)
-      if (requested > MAX_SCROLL || requested < 0) {
-        window.scrollBy({ top: requested > MAX_SCROLL ? requested - MAX_SCROLL : requested, behavior: 'instant' })
+      const requested = scrollRef.current + delta
+      const next = clamp(requested)
+      const leftover = requested - next
+      if (next !== scrollRef.current) {
+        pinHero()
+        scrollRef.current = next
+        virtualScroll.set(next)
+        holdPage(next > 0 && next < MAX_SCROLL)
+      } else if (next > 0 && next < MAX_SCROLL) {
+        pinHero()
+      }
+      // Hand off leftover pixels 1:1. Never jump a whole viewport — that was
+      // dropping the phone into Portfolio and then pinning back up.
+      if (leftover > 0 && next >= MAX_SCROLL) {
+        holdPage(false)
+        window.scrollBy({ top: leftover, behavior: 'instant' })
       }
     }
 
@@ -445,66 +451,69 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
         Math.abs(point - value) < Math.abs(points[best] - value) ? index : best, 0)
     }
     const moveOneStep = (direction: 1 | -1, event: Event, force = false) => {
-      const rect = container.getBoundingClientRect()
-      const canCapture = rect.top < window.innerHeight && rect.bottom > 0
-      if (!canCapture) return
-      if (stepLocked.current || photoOpen) {
-        if (event.cancelable) event.preventDefault()
-        return
-      }
-      if (event.cancelable) event.preventDefault()
       const points = steps()
       const current = scrollRef.current
       const index = nearestStep(current)
       const targetIndex = Math.max(0, Math.min(points.length - 1, index + direction))
       const target = points[targetIndex]
-      if (target === current) {
-        advance(direction > 0 ? MAX_SCROLL + 1 : -1, event, force)
-        return
-      }
-      stepLocked.current = true
-      if (stepUnlockTimer.current !== null) window.clearTimeout(stepUnlockTimer.current)
-      stepUnlockTimer.current = window.setTimeout(() => { stepLocked.current = false }, 520)
-      advance(target - current, event, force)
+      advance(target === current ? (direction > 0 ? MAX_SCROLL + 1 : -1) : target - current, event, force)
     }
 
     const handleWheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return
       if (Math.abs(event.deltaY) < 1) return
-      moveOneStep(event.deltaY > 0 ? 1 : -1, event)
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? container.clientHeight : 1
+      advance(event.deltaY * unit, event)
     }
-    let touchStartY = 0
-    let touchStartX = 0
-    let touchMoved = false
+    let lastTouchY = 0
+    let lastTouchX = 0
+    let lastTouchTime = 0
+    let touchVelocity = 0
+    let axisLocked: 'x' | 'y' | null = null
     const handleTouchStart = (event: TouchEvent) => {
-      touchStartY = event.touches[0].clientY
-      touchStartX = event.touches[0].clientX
-      touchMoved = false
+      lastTouchY = event.touches[0].clientY
+      lastTouchX = event.touches[0].clientX
+      lastTouchTime = performance.now()
+      touchVelocity = 0
+      axisLocked = null
+      if (scrollRef.current > 0 && scrollRef.current < MAX_SCROLL) pinHero()
     }
     const handleTouchMove = (event: TouchEvent) => {
       if (event.touches.length !== 1) return
       const touch = event.touches[0]
-      const deltaX = touchStartX - touch.clientX
-      const deltaY = touchStartY - touch.clientY
-      if (Math.abs(deltaY) >= Math.abs(deltaX) && Math.abs(deltaY) > 12) {
-        touchMoved = true
-        event.preventDefault()
-      }
+      const deltaX = lastTouchX - touch.clientX
+      const deltaY = lastTouchY - touch.clientY
+      if (!axisLocked && Math.hypot(deltaX, deltaY) > 6) axisLocked = Math.abs(deltaY) >= Math.abs(deltaX) ? 'y' : 'x'
+      if (axisLocked === 'x') return
+      const now = performance.now()
+      const dt = Math.max(8, now - lastTouchTime)
+      touchVelocity = deltaY / dt
+      lastTouchY = touch.clientY
+      lastTouchX = touch.clientX
+      lastTouchTime = now
+      advance(deltaY, event, true)
     }
-    const handleTouchEnd = (event: TouchEvent) => {
-      if (!touchMoved) return
-      const deltaY = touchStartY - (event.changedTouches[0]?.clientY ?? touchStartY)
-      if (Math.abs(deltaY) < 24) return
-      const direction = deltaY > 0 ? 1 : -1
-      moveOneStep(direction, event, true)
-      touchMoved = false
+    const handleTouchEnd = () => {
+      if (axisLocked !== 'y') return
+      if (scrollRef.current <= 0 || scrollRef.current >= MAX_SCROLL) return
+      const travel = Math.max(-420, Math.min(420, touchVelocity * 220))
+      if (Math.abs(travel) < 28) return
+      rewindAnimation.current?.stop()
+      const target = clamp(scrollRef.current + travel)
+      rewindAnimation.current = animate(virtualScroll, target, {
+        duration: 0.42, ease: [0.16, 1, 0.3, 1],
+        onUpdate: value => {
+          scrollRef.current = value
+          holdPage(value > 0 && value < MAX_SCROLL)
+        },
+      })
     }
     const handleKey = (event: KeyboardEvent) => {
       if (event.target !== container || event.ctrlKey || event.metaKey || event.altKey) return
       const direction = ({ ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1, ' ': event.shiftKey ? -1 : 1 } as Record<string, 1 | -1 | undefined>)[event.key]
-      if (direction !== undefined) moveOneStep(direction, event)
-      if (event.key === 'Home') advance(-MAX_SCROLL, event)
-      if (event.key === 'End') advance(MAX_SCROLL, event)
+      if (direction !== undefined) moveOneStep(direction, event, true)
+      if (event.key === 'Home') advance(-scrollRef.current, event, true)
+      if (event.key === 'End') advance(MAX_SCROLL - scrollRef.current, event, true)
     }
     const handleMouseMove = (event: MouseEvent) => {
       if (hoveringPhoto.current || photoOpen) return
@@ -515,16 +524,16 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     window.addEventListener('wheel', handleWheel, { passive: false })
     window.addEventListener('touchstart', handleTouchStart, { passive: true })
     window.addEventListener('touchmove', handleTouchMove, { passive: false })
-    window.addEventListener('touchend', handleTouchEnd, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd, { passive: true })
     container.addEventListener('keydown', handleKey)
     container.addEventListener('mousemove', handleMouseMove)
     container.addEventListener('mouseleave', resetMouse)
     return () => {
+      holdPage(false)
       window.removeEventListener('wheel', handleWheel)
       window.removeEventListener('touchstart', handleTouchStart)
       window.removeEventListener('touchmove', handleTouchMove)
       window.removeEventListener('touchend', handleTouchEnd)
-      if (stepUnlockTimer.current !== null) window.clearTimeout(stepUnlockTimer.current)
       container.removeEventListener('keydown', handleKey)
       container.removeEventListener('mousemove', handleMouseMove)
       container.removeEventListener('mouseleave', resetMouse)

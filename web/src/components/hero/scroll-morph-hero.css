@@ -11,6 +11,12 @@
   background: #fdfdfd;
   color: #0f0f0f;
   scroll-margin-top: 0;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+html.morph-holding, html.morph-holding body {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 .scroll-morph:focus-visible { outline: 2px solid #0f0f0f; outline-offset: -4px; }
 .morph-ring { position: absolute; z-index: 0; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
