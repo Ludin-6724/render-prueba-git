@@ -137,12 +137,11 @@ export class CameraSequence {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
       if (canBlend && lower !== upper) {
         const fraction = this.target - lower
-        ctx.globalAlpha = 1 - fraction
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.globalAlpha = 1
         ctx.drawImage(this.decoded.get(lower)!, 0, 0)
-        ctx.globalCompositeOperation = 'lighter'
         ctx.globalAlpha = fraction
         ctx.drawImage(this.decoded.get(upper)!, 0, 0)
-        ctx.globalCompositeOperation = 'source-over'
         ctx.globalAlpha = 1
       } else ctx.drawImage(this.decoded.get(nearest)!, 0, 0)
       this.drawn = position

@@ -15,6 +15,7 @@ const TOTAL_IMAGES = 20
 const ORIGINAL_MORPH_SPRING = { stiffness: 40, damping: 20 }
 const AUDIOVISUAL_START = 180
 const CAMERA_MOTION_START = 360
+const CAMERA_TURN_MID = 810
 const CAMERA_MOTION_END = 1260
 const PHOTO_HANDOFF_START = 1380
 const PHOTO_HANDOFF_END = 1640
@@ -41,6 +42,7 @@ const SCROLL_STEPS = [
   0,
   AUDIOVISUAL_START,
   CAMERA_MOTION_START,
+  CAMERA_TURN_MID,
   CAMERA_MOTION_END,
   PHOTO_HANDOFF_START,
   PHOTO_HANDOFF_END,
@@ -51,10 +53,10 @@ const SCROLL_STEPS = [
   ...FEATURED_IMAGES.diseno.slice(1).map((_, index) => DESIGN_START + (index + 1) * 120),
   MAX_SCROLL,
 ].filter((point, index, points) => index === 0 || point > points[index - 1])
-// Phone: skip the empty dock-only beat and the long camera-only valley so the
-// first swipe lands on a composed act (title + camera/photos), not a clipped ring.
-const MOBILE_SCROLL_STEPS = SCROLL_STEPS.filter(point =>
-  point !== AUDIOVISUAL_START && point !== CAMERA_MOTION_END && point !== PHOTO_HANDOFF_START)
+const LAST_DESIGN_STEP = DESIGN_START + (FEATURED_IMAGES.diseno.length - 1) * 120
+// Skip only the empty dock-only beat. Keep the camera turn and photo handoff
+// as their own steps so a phone swipe does not jump 121 frames at once.
+const MOBILE_SCROLL_STEPS = SCROLL_STEPS.filter(point => point !== AUDIOVISUAL_START && point !== PHOTO_HANDOFF_START)
 const stepsForWidth = (width: number) => width < 768 ? MOBILE_SCROLL_STEPS : SCROLL_STEPS
 const IMG_WIDTH = 60
 const IMG_HEIGHT = 85
@@ -99,8 +101,8 @@ function ScrollCamera({ scroll }: { scroll: MotionValue<number> }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const opacity = useTransform(scroll, [60, AUDIOVISUAL_START, PHOTO_HANDOFF_START, PHOTO_HANDOFF_END], [0, 1, 1, 0])
-  const y = useTransform(scroll, [PHOTO_HANDOFF_START, PHOTO_HANDOFF_END], [0, 32])
-  const scale = useTransform(scroll, [PHOTO_HANDOFF_START, PHOTO_HANDOFF_END], [1, 0.7])
+  const y = useTransform(scroll, [PHOTO_HANDOFF_START, PHOTO_HANDOFF_END], [0, 16])
+  const scale = useTransform(scroll, [PHOTO_HANDOFF_START, PHOTO_HANDOFF_END], [1, 0.88])
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -457,6 +459,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     }
     let stepLocked = false
     let stepUnlockTimer = 0
+    let designEnteredAt = 0
     const releaseToPage = (pixels: number) => {
       holdPage(false)
       const distance = Math.max(120, pixels)
@@ -471,8 +474,18 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       const current = scrollRef.current
       const index = nearestStep(current)
       const targetIndex = Math.max(0, Math.min(points.length - 1, index + direction))
-      const target = points[targetIndex]
-      const leaving = direction > 0 && (current >= MAX_SCROLL || target >= MAX_SCROLL || index >= points.length - 1)
+      let target = points[targetIndex]
+      const enteringDesign = direction > 0 && current < DESIGN_START && target >= DESIGN_START
+      if (enteringDesign) {
+        target = DESIGN_START
+        designEnteredAt = performance.now()
+      }
+      if (!enteringDesign && direction > 0 && current >= DESIGN_START && current < LAST_DESIGN_STEP && performance.now() - designEnteredAt < 500) {
+        if (event.cancelable) event.preventDefault()
+        pinHero()
+        return
+      }
+      const leaving = direction > 0 && current >= LAST_DESIGN_STEP
       if (leaving) {
         if (event.cancelable) event.preventDefault()
         scrollRef.current = MAX_SCROLL

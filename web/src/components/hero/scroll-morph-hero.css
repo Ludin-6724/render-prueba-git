@@ -32,10 +32,10 @@ html.morph-holding, html.morph-holding body {
 .morph-copy-service { top: 13%; left: 5%; width: 90%; }
 .morph-title { font-family: 'Archivo Black', 'Archivo', sans-serif; font-size: var(--type-section); line-height: 1.06; letter-spacing: -.035em; text-wrap: balance; }
 .morph-camera-stage { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); display: grid; place-items: center; pointer-events: none; mix-blend-mode: multiply; }
-.morph-camera { position: relative; width: 100%; aspect-ratio: 16 / 9; }
+.morph-camera { position: relative; width: 100%; aspect-ratio: 16 / 9; will-change: transform, opacity; }
 .morph-logo { display: block; width: 100%; height: auto; margin-inline: auto; }
 .morph-camera img, .morph-camera canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
-.morph-camera canvas { opacity: 0; }
+.morph-camera canvas { opacity: 0; transform: translateZ(0); }
 .morph-camera[data-ready='true'] canvas { opacity: 1; }
 .morph-sub { font-size: var(--type-body); line-height: 1.65; margin: 1.25rem auto 0; max-width: 44ch; }
 .morph-tags { font-size: var(--type-meta); line-height: 1.6; margin-top: 1rem; font-weight: 700; }
