@@ -28,7 +28,7 @@ const FEATURED_IMAGES = {
   ],
   marketing: images.filter(image => image.service === 'marketing').sort((a, b) =>
     Number(b.src.endsWith('marketing-01.webp')) - Number(a.src.endsWith('marketing-01.webp'))),
-  diseno: DESIGN_IMAGES.length === 1 ? Array.from({ length: 5 }, () => DESIGN_IMAGES[0]) : DESIGN_IMAGES,
+  diseno: DESIGN_IMAGES.filter((image, index, list) => list.findIndex(item => item.src === image.src) === index),
 }
 const MARKETING_START = PHOTO_HANDOFF_END + FEATURED_IMAGES.audiovisuales.length * 100 + 80
 const DESIGN_START = MARKETING_START + 280 + FEATURED_IMAGES.marketing.length * 120 + 80
@@ -46,7 +46,7 @@ const SCROLL_STEPS = [
   MARKETING_START,
   ...FEATURED_IMAGES.marketing.map((_, index) => MARKETING_START + 320 + index * 120),
   DESIGN_START,
-  ...FEATURED_IMAGES.diseno.map((_, index) => DESIGN_START + 320 + index * 120),
+  ...FEATURED_IMAGES.diseno.slice(1).map((_, index) => DESIGN_START + (index + 1) * 120),
   MAX_SCROLL,
 ].filter((point, index, points) => index === 0 || point > points[index - 1])
 // Phone: skip the empty dock-only beat and the long camera-only valley so the
@@ -455,19 +455,30 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     }
     let stepLocked = false
     let stepUnlockTimer = 0
+    const releaseToPage = (pixels: number) => {
+      holdPage(false)
+      const distance = Math.max(120, pixels)
+      window.scrollBy({ top: distance, behavior: 'instant' })
+      requestAnimationFrame(() => {
+        holdPage(false)
+        if (window.scrollY < 24) window.scrollBy({ top: distance, behavior: 'instant' })
+      })
+    }
     const moveOneStep = (direction: 1 | -1, event: Event, force = false, leftover = 0) => {
       const points = steps()
       const current = scrollRef.current
       const index = nearestStep(current)
       const targetIndex = Math.max(0, Math.min(points.length - 1, index + direction))
       const target = points[targetIndex]
-      if (target === current) {
-        if (direction > 0 && current >= MAX_SCROLL) {
-          holdPage(false)
-          window.scrollBy({ top: leftover > 0 ? leftover : 96, behavior: 'instant' })
-        }
+      const leaving = direction > 0 && (current >= MAX_SCROLL || target >= MAX_SCROLL || index >= points.length - 1)
+      if (leaving) {
+        if (event.cancelable) event.preventDefault()
+        scrollRef.current = MAX_SCROLL
+        virtualScroll.set(MAX_SCROLL)
+        releaseToPage(leftover)
         return
       }
+      if (target === current) return
       advance(target - current, event, force)
     }
 
