@@ -9,11 +9,24 @@ import { useReveal } from '@/hooks/useReveal'
 export default function Layout() {
   useReveal()
   const contentRef = useRef<HTMLDivElement>(null)
-  const { pathname } = useLocation()
+  const { pathname, hash, key } = useLocation()
 
   useEffect(() => {
-    if (!window.location.hash) window.scrollTo({ top: 0, behavior: 'instant' })
-  }, [pathname])
+    if (!hash) { window.scrollTo({ top: 0, behavior: 'instant' }); return }
+    let id: string
+    try { id = decodeURIComponent(hash.slice(1)) } catch { return }
+    const target = ['portfolio', 'portafolio', 'trabajo'].includes(id) ? 'portafolio' : id
+    const frame = requestAnimationFrame(() => {
+      if (['audiovisuales', 'marketing', 'diseno'].includes(target) && document.querySelector('.scroll-morph')) {
+        window.dispatchEvent(new CustomEvent('render:morph-navigate', { detail: target }))
+        return
+      }
+      document.getElementById(target)?.scrollIntoView({
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start',
+      })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [pathname, hash, key])
 
   return (
     <div className="bg-white text-[#0f0f0f]">

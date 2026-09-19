@@ -4,32 +4,47 @@ import { nav, site } from '@/content/site'
 
 const navLinkClass = 'flex min-h-11 items-center text-xs font-semibold uppercase tracking-[0.06em] text-[#0f0f0f] underline-offset-8 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f0f0f]'
 
+const serviceLinks = [
+  { label: 'Audiovisuales', href: '/#audiovisuales' },
+  { label: 'Marketing digital', href: '/#marketing' },
+  { label: 'Diseño gráfico', href: '/#diseno' },
+]
+
+function ServicesMenu({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
+  const details = useRef<HTMLDetailsElement>(null)
+  return <details ref={details} className="relative" onBlur={event => {
+    if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false
+  }} onKeyDown={event => {
+    if (event.key === 'Escape' && details.current?.open) { event.preventDefault(); event.stopPropagation(); details.current!.open = false; details.current?.querySelector('summary')?.focus() }
+  }}>
+    <summary className={mobile ? 'cursor-pointer border-b border-white/15 py-3 text-[clamp(2rem,4.2vw,4rem)] font-semibold uppercase tracking-[0.06em] focus-visible:outline' : `${navLinkClass} cursor-pointer gap-2`}>
+      SERVICIOS <span aria-hidden="true" className="text-sm">⌄</span>
+    </summary>
+    <div className={mobile ? 'grid gap-1 border-b border-white/15 py-3 pl-4' : 'absolute left-0 top-full min-w-64 border border-[#ececec] bg-white p-3 shadow-lg'}>
+      {serviceLinks.map(item => <Link key={item.href} to={item.href} onClick={() => { if (details.current) details.current.open = false; onNavigate?.() }}
+        className={`flex min-h-11 items-center px-3 text-sm font-semibold uppercase tracking-[0.06em] underline-offset-4 hover:underline focus-visible:outline ${mobile ? 'text-white' : 'text-[#0f0f0f]'}`}>{item.label}</Link>)}
+    </div>
+  </details>
+}
+
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(() => window.scrollY > 40)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
-  const portfolioRef = useRef<HTMLDetailsElement>(null)
   const previousOverflow = useRef('')
   const location = useLocation()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
-    const onPointerDown = (event: PointerEvent) => {
-      const portfolio = portfolioRef.current
-      if (portfolio && event.target instanceof Node && !portfolio.contains(event.target)) portfolio.open = false
-    }
     window.addEventListener('scroll', onScroll, { passive: true })
-    document.addEventListener('pointerdown', onPointerDown)
     return () => {
       window.removeEventListener('scroll', onScroll)
-      document.removeEventListener('pointerdown', onPointerDown)
     }
   }, [])
 
   useEffect(() => {
     dialogRef.current?.close()
-    if (portfolioRef.current) portfolioRef.current.open = false
   }, [location.pathname])
 
   useEffect(() => {
@@ -42,7 +57,6 @@ export default function Navbar() {
   const openMenu = () => {
     const dialog = dialogRef.current
     if (!dialog || dialog.open) return
-    if (portfolioRef.current) portfolioRef.current.open = false
     previousOverflow.current = document.body.style.overflow
     dialog.showModal()
     document.body.style.overflow = 'hidden'
@@ -50,7 +64,7 @@ export default function Navbar() {
   }
 
   const closeMenu = () => dialogRef.current?.close()
-  const overlay = nav.flatMap<{ label: string; href: string }>((item) => 'children' in item ? [...item.children] : [item])
+  const overlay = nav
 
   return (
     <>
@@ -63,43 +77,7 @@ export default function Navbar() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-6 xl:gap-8" aria-label="Principal">
-            {nav.slice(1).map((item) => 'children' in item ? (
-              <details
-                key={item.label}
-                ref={portfolioRef}
-                className="group relative"
-                onBlur={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Escape' && event.currentTarget.open) {
-                    event.preventDefault()
-                    event.currentTarget.open = false
-                    event.currentTarget.querySelector('summary')?.focus()
-                  }
-                }}
-              >
-                <summary className={`${navLinkClass} cursor-pointer list-none gap-2 [&::-webkit-details-marker]:hidden`}>
-                  {item.label}
-                  <svg className="transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                    <path d="m3 4.5 3 3 3-3" stroke="currentColor" strokeWidth="1.5" />
-                  </svg>
-                </summary>
-                <div className="absolute left-0 top-full min-w-44 border border-[#ececec] bg-white p-2">
-                  {item.children.map((child) => (
-                    <Link
-                      key={child.href}
-                      to={child.href}
-                      aria-current={location.pathname === child.href ? 'page' : undefined}
-                      onClick={() => { if (portfolioRef.current) portfolioRef.current.open = false }}
-                      className={`${navLinkClass} px-3 hover:bg-[#faf7f2] focus-visible:outline-offset-[-2px]`}
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
-                </div>
-              </details>
-            ) : (
+            {nav.slice(1).map((item) => item.label === 'SERVICIOS' ? <ServicesMenu key={item.href} /> : (
               <Link key={item.href} to={item.href} aria-current={location.pathname === item.href ? 'page' : undefined} className={navLinkClass}>
                 {item.label}
               </Link>
@@ -156,7 +134,7 @@ export default function Navbar() {
 
         <div className="relative flex min-h-full flex-col justify-between gap-12 px-6 md:px-12 pt-28 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
           <nav className="relative z-[1] flex flex-col" aria-label="Menú completo">
-            {overlay.map((item) => (
+            {overlay.map((item) => item.label === 'SERVICIOS' ? <ServicesMenu key={item.href} mobile onNavigate={closeMenu} /> : (
               <Link
                 key={item.href}
                 to={item.href}

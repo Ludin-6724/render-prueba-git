@@ -1,0 +1,109 @@
+/* The navbar mark returns after leaving the hero; navigation stays available. */
+.morph-in-view header a[href='/'] img { opacity: 0; }
+.scroll-morph {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100svh;
+  min-height: 440px;
+  /* Clip the offscreen arc without letting button focus scroll the stage internally. */
+  overflow: clip;
+  background: #fdfdfd;
+  color: #0f0f0f;
+  scroll-margin-top: 0;
+}
+.scroll-morph:focus-visible { outline: 2px solid #0f0f0f; outline-offset: -4px; }
+.morph-ring { position: absolute; z-index: 0; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.morph-card { position: absolute; border: 0; padding: 0; background: transparent; pointer-events: auto; cursor: zoom-in; }
+.morph-card:disabled { pointer-events: none; }
+.morph-card:focus-visible { outline: 2px solid #f7ac42; outline-offset: 5px; border-radius: 12px; }
+.morph-card img { pointer-events: none; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; box-shadow: 0 5px 16px rgb(0 0 0 / 12%); background: #eee; }
+/* Blend at the outer compositing layer: nested opacity/filter animations isolate the camera.
+   White in the existing turn frames becomes visually neutral against the page and cards. */
+.morph-copy { position: absolute; z-index: 1; text-align: center; pointer-events: none; mix-blend-mode: multiply; }
+.morph-copy-intro { top: 50%; left: 50%; width: min(48%, 390px); transform: translate(-50%, -50%); }
+.morph-copy-service { top: 13%; left: 5%; width: 90%; }
+.morph-title { font-family: 'Archivo Black', 'Archivo', sans-serif; font-size: var(--type-section); line-height: 1.06; letter-spacing: -.035em; text-wrap: balance; }
+.morph-camera-stage { position: absolute; z-index: 2; left: 50%; bottom: 60px; transform: translateX(-50%); display: grid; place-items: center; pointer-events: none; mix-blend-mode: multiply; }
+.morph-camera { position: relative; width: 100%; aspect-ratio: 16 / 9; }
+.morph-logo { display: block; width: 100%; height: auto; margin-inline: auto; }
+.morph-camera img, .morph-camera canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+.morph-camera canvas { opacity: 0; }
+.morph-camera[data-ready='true'] canvas { opacity: 1; }
+.morph-sub { font-size: var(--type-body); line-height: 1.65; margin: 1.25rem auto 0; max-width: 44ch; }
+.morph-tags { font-size: var(--type-meta); line-height: 1.6; margin-top: 1rem; font-weight: 700; }
+.morph-tags::before { content: ''; display: block; height: 3px; width: 32px; margin: 0 auto 1rem; background: #f7ac42; }
+.morph-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: #eee; }
+.morph-progress > div { height: 100%; background: #f7ac42; transform-origin: left; }
+.morph-skip { position: absolute; z-index: 3; top: 92px; left: 16px; min-height: 44px; padding: 12px 16px; background: #0f0f0f; color: white; transform: translateY(-200%); opacity: 0; pointer-events: none; }
+.morph-skip:focus { transform: translateY(0); opacity: 1; pointer-events: auto; }
+#after-scroll-morph { scroll-margin-top: 90px; }
+.morph-static { padding-top: 120px; padding-bottom: 4rem; }
+.morph-static > .morph-title { text-align: center; }
+.morph-static .morph-logo { max-width: 360px; }
+.morph-static-service + .morph-static-service { margin-top: 4rem; }
+.morph-static-service .morph-tags::before { margin-left: 0; }
+.morph-static-photos { display: flex; gap: 1rem; overflow-x: auto; padding: 1.5rem 0; }
+.morph-static-photos img { width: 180px; height: 225px; flex: 0 0 auto; object-fit: cover; border-radius: 12px; }
+@media (max-width: 767px) {
+  .morph-copy-intro { width: 44%; }
+  .morph-copy-intro .morph-title { font-size: var(--type-project); }
+  .morph-copy-service { top: 13%; }
+}
+@media (max-height: 580px) and (min-width: 768px) {
+  .morph-copy-intro .morph-title { font-size: var(--type-project); }
+}
+
+
+.morph-brand { position: relative; }
+.morph-isotype { position: absolute; height: 100%; width: auto; top: 0; left: 0; right: 0; margin-inline: auto; }
+.morph-editorial { position: relative; left: 50%; transform: translateX(-50%); width: max-content; margin-top: 1.25rem; text-align: center; white-space: nowrap; }
+.morph-static > .morph-editorial { margin-bottom: 4rem; }
+
+/* Match the existing project caption in Nuestro trabajo; reuse its type tokens. */
+.morph-copy-service .morph-title { font-family: 'Archivo Black', 'Archivo', sans-serif; font-weight: 400; font-size: var(--type-project); line-height: 1.2; letter-spacing: normal; text-wrap: balance; max-width: 40ch; margin-inline: auto; }
+
+.morph-brand-flight { container-type: inline-size; position: fixed; z-index: 60; text-align: center; pointer-events: none; visibility: hidden; }
+.morph-in-view .morph-brand-flight { visibility: visible; }
+.morph-brand-flight .morph-editorial { position: absolute; margin-top: 0; }
+.morph-copy-service { top: clamp(96px, 12svh, 128px); left: 5%; width: 90%; }
+.morph-editorial, .morph-copy-service .morph-sub { font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: calc(var(--type-body) + 1px); letter-spacing: normal; line-height: 1.6; }
+.morph-copy-service .morph-sub { display: block; max-width: 72ch; color: #505050; margin-top: 1rem; }
+.morph-copy-service .morph-tags { display: block; font-family: 'Archivo', system-ui, sans-serif; font-weight: 700; font-size: var(--type-body); color: #505050; letter-spacing: normal; line-height: 1.6; margin-top: 1.25rem; text-wrap: balance; }
+.morph-copy-service .morph-tags::before { display: none; }
+
+@media (max-width: 374px) {
+  .morph-editorial, .morph-copy-service .morph-sub { font-size: var(--type-body); }
+  .morph-editorial { letter-spacing: -.05em; }
+}
+
+.morph-camera img, .morph-camera canvas { background: transparent; }
+.morph-camera[data-ready='true'] img { visibility: hidden; }
+
+.morph-static-photos button { flex: 0 0 auto; cursor: zoom-in; border-radius: 12px; }
+.morph-static-photos button:focus-visible { outline: 2px solid #f7ac42; outline-offset: 4px; }
+.morph-photo-backdrop { position: fixed; inset: 0; z-index: 120; background: rgb(15 15 15 / .68); }
+.morph-photo-backdrop[data-state='open'] { animation: morph-photo-fade 320ms ease both; }
+.morph-photo-backdrop[data-state='closed'] { animation: morph-photo-fade 240ms ease reverse both; }
+.morph-photo-viewer { position: fixed; z-index: 121; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: calc(100vw - 48px); max-height: calc(100dvh - 128px); outline: none; }
+.morph-photo-viewer[data-state='open'] { animation: morph-photo-expand 500ms cubic-bezier(.16, 1, .3, 1) both; }
+.morph-photo-viewer[data-state='closed'] { animation: morph-photo-expand 280ms cubic-bezier(.4, 0, .2, 1) reverse both; }
+.morph-photo-viewer > img { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 12px; box-shadow: 0 16px 60px rgb(0 0 0 / .2); }
+.morph-photo-close { position: absolute; right: 0; top: -52px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #fdfdfd; color: #0f0f0f; cursor: pointer; }
+.morph-photo-close:focus-visible { outline: 2px solid #f7ac42; outline-offset: 3px; }
+@keyframes morph-photo-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes morph-photo-expand {
+  from { opacity: .25; transform: translate(calc(-50% + var(--photo-x)), calc(-50% + var(--photo-y))) scale(var(--photo-scale)); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .morph-photo-viewer, .morph-photo-backdrop { animation: none !important; }
+}
+
+/* A single strip promotes the actual next card; full artwork remains uncropped. */
+.morph-card-service { display: flex; align-items: center; justify-content: center; }
+.morph-card-service img { position: static; inset: auto; width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; background: transparent; }
+.morph-card-active img { box-shadow: 0 8px 28px rgb(0 0 0 / 12%); }
+
+.morph-anchor { position: absolute; top: 0; left: 0; pointer-events: none; }
+.morph-static-service { scroll-margin-top: 0; }

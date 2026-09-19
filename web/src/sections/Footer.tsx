@@ -20,10 +20,10 @@ export default function Footer() {
               <ul className="space-y-2.5 text-sm">
                 {[
                   ['Inicio', '/'],
-                  ['Servicios', '/servicios/'],
+                  ['Servicios', '/#audiovisuales'],
                   ['Comercial', '/comercial/'],
                   ["ONG's", '/ongs/'],
-                  ['Nosotros', '/nosotros/'],
+                  ['Nosotros', '/#nosotros'],
                   ['Contacto', '/contacto/'],
                 ].map(([label, href]) => (
                   <li key={href}>

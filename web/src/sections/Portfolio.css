@@ -1,0 +1,17 @@
+.portfolio-squeeze { position: relative; padding-block: var(--section-space); color: #0f0f0f; background: linear-gradient(rgb(253 253 253 / .91), rgb(253 253 253 / .85)), url('/render-visual/fondo-verdadero.jpg') center / cover; }
+.portfolio-video-backdrop { position: fixed; inset: 0; z-index: 110; background: rgb(15 15 15 / .75); }
+.portfolio-video-modal { position: fixed; z-index: 111; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(1100px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; background: #fdfdfd; color: #0f0f0f; border-radius: 12px; }
+.portfolio-video-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding: 1rem; }
+.portfolio-video-heading h2 { font-family: 'Archivo Black', 'Archivo', sans-serif; font-size: var(--type-project); line-height: 1.2; }
+.portfolio-video-heading p { margin-top: .4rem; font-size: var(--type-meta); }
+.portfolio-video-close { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; background: #f7ac42; }
+.portfolio-video-modal iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+.portfolio-video-modal :focus-visible { outline: 2px solid #0f0f0f; outline-offset: 3px; }
+
+.portfolio-group { scroll-margin-top: 100px; padding-top: clamp(2rem, 4vw, 3.5rem); border-top: 1px solid rgb(15 15 15 / .2); }
+.portfolio-group > h3 { margin-bottom: clamp(2.5rem, 4vw, 4rem); }
+.portfolio-group + .portfolio-group { margin-top: var(--section-space); }
+
+.portfolio-anchor { position: absolute; top: 0; left: 0; scroll-margin-top: 100px; }
+/* html already reserves 6rem for the fixed navbar; don't count that offset twice. */
+.portfolio-squeeze[id], .portfolio-anchor { scroll-margin-top: 0; }

@@ -264,7 +264,7 @@ section[id] { scroll-margin-top: 6rem; }
 .service-row h3 svg { flex-shrink: 0; margin-top: .25rem; transition: transform .25s var(--ease-out); }
 .service-row h3 a:hover svg { transform: translate(3px, -3px); }
 .service-tags { display: flex; flex-wrap: wrap; align-content: start; justify-content: end; gap: .5rem; font-size: var(--type-meta); color: var(--muted-ink); }
-.service-tags li { padding: .25rem .65rem; background: var(--paper-warm); }
+.service-tags li { font-weight: 700; padding: .25rem .65rem; background: var(--paper-warm); }
 .services-section > .text-link { margin-top: 1.5rem; }
 
 .work-section { padding-block: var(--section-space); background: var(--night); color: var(--cream); }

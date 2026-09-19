@@ -30,7 +30,7 @@ export class CameraSequence {
     this.onFailure = onFailure
     canvas.width = variant === 'mobile' ? 960 : 1280
     canvas.height = canvas.width * 9 / 16
-    this.context = canvas.getContext('2d', { alpha: false })
+    this.context = canvas.getContext('2d', { alpha: true })
     if (!this.context || typeof createImageBitmap !== 'function') {
       this.stopped = true
       onFailure()
@@ -38,7 +38,7 @@ export class CameraSequence {
   }
 
   seek(index: number) {
-    const next = Math.max(0, Math.min(this.count - 1, Math.round(index)))
+    const next = Math.max(0, Math.min(this.count - 1, index))
     if (next !== this.target) this.direction = Math.sign(next - this.target)
     this.target = next
     this.schedulePaint()
@@ -51,9 +51,10 @@ export class CameraSequence {
   }
 
   private nearby() {
-    const order = [this.target]
+    const center = Math.round(this.target)
+    const order = [Math.floor(this.target), Math.ceil(this.target)]
     for (let offset = 1; offset <= 4; offset++) {
-      order.push(this.target + offset * this.direction, this.target - offset * this.direction)
+      order.push(center + offset * this.direction, center - offset * this.direction)
     }
     return order.filter(index => index >= 0 && index < this.count)
   }
@@ -101,7 +102,8 @@ export class CameraSequence {
 
   private async decode(index: number) {
     try {
-      const bitmap = await createImageBitmap(this.blobs.get(index)!)
+      const original = await createImageBitmap(this.blobs.get(index)!)
+      const bitmap = await transparentBackground(original)
       if (this.stopped) { bitmap.close(); return }
       this.decoded.set(index, bitmap)
       // 10 decoded images maximum: ~20 MiB mobile / 35 MiB desktop.
@@ -124,12 +126,27 @@ export class CameraSequence {
     this.raf = requestAnimationFrame(() => {
       this.raf = 0
       const nearest = [...this.decoded.keys()].sort((a, b) => Math.abs(a - this.target) - Math.abs(b - this.target))[0]
-      if (nearest === undefined || nearest === this.drawn || !this.context) return
-      // A completed old decode must never pull the image away from the new target.
-      if (this.drawn >= 0 && Math.abs(nearest - this.target) > Math.abs(this.drawn - this.target)) return
-      this.context.drawImage(this.decoded.get(nearest)!, 0, 0)
-      this.drawn = nearest
-      this.onDraw(nearest)
+      if (nearest === undefined || !this.context) return
+      const lower = Math.floor(this.target)
+      const upper = Math.ceil(this.target)
+      const canBlend = this.decoded.has(lower) && this.decoded.has(upper)
+      const position = canBlend ? this.target : nearest
+      if (position === this.drawn) return
+      // Blend adjacent decoded poses for continuous motion between the original frames.
+      const ctx = this.context
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+      if (canBlend && lower !== upper) {
+        const fraction = this.target - lower
+        ctx.globalAlpha = 1 - fraction
+        ctx.drawImage(this.decoded.get(lower)!, 0, 0)
+        ctx.globalCompositeOperation = 'lighter'
+        ctx.globalAlpha = fraction
+        ctx.drawImage(this.decoded.get(upper)!, 0, 0)
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.globalAlpha = 1
+      } else ctx.drawImage(this.decoded.get(nearest)!, 0, 0)
+      this.drawn = position
+      this.onDraw(Math.round(position))
     })
   }
 
@@ -141,4 +158,44 @@ export class CameraSequence {
     this.decoded.clear()
     this.blobs.clear()
   }
+}
+
+/** Remove only the near-white studio backdrop connected to the frame border.
+ * Done once when a frame is decoded, never inside the scroll/paint loop.
+ * Enclosed highlights and white labels on the camera remain intact.
+ */
+async function transparentBackground(bitmap: ImageBitmap): Promise<ImageBitmap> {
+  const canvas = document.createElement('canvas')
+  const { width, height } = bitmap
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: true })
+  if (!ctx) return bitmap
+  ctx.drawImage(bitmap, 0, 0)
+  const frame = ctx.getImageData(0, 0, width, height)
+  const pixels = frame.data
+  const queue = new Uint32Array(width * height)
+  let head = 0
+  let tail = 0
+  const visit = (index: number) => {
+    const p = index * 4
+    if (!pixels[p + 3]) return
+    const low = Math.min(pixels[p], pixels[p + 1], pixels[p + 2])
+    const high = Math.max(pixels[p], pixels[p + 1], pixels[p + 2])
+    if (low < 235 || high - low > 12) return
+    pixels[p + 3] = 0
+    queue[tail++] = index
+  }
+  for (let x = 0; x < width; x++) { visit(x); visit((height - 1) * width + x) }
+  for (let y = 1; y < height - 1; y++) { visit(y * width); visit(y * width + width - 1) }
+  while (head < tail) {
+    const index = queue[head++]
+    if (index % width) visit(index - 1)
+    if (index % width < width - 1) visit(index + 1)
+    if (index >= width) visit(index - width)
+    if (index < width * (height - 1)) visit(index + width)
+  }
+  ctx.putImageData(frame, 0, 0)
+  bitmap.close()
+  return createImageBitmap(canvas)
 }

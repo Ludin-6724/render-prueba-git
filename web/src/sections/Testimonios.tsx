@@ -27,8 +27,8 @@ export default function Testimonios() {
               if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1)
             }}>
             <figure key={index} className="quote-in" aria-live={autoplay.running ? "off" : "polite"} aria-atomic="true">
-              <blockquote>“{testimonios[index]}”</blockquote>
-              <figcaption>Cliente de RENDER</figcaption>
+              <blockquote>“{testimonios[index].quote}”</blockquote>
+              <figcaption>{testimonios[index].name || 'Cliente de RENDER'}{testimonios[index].company && <> · {testimonios[index].company}</>}</figcaption>
             </figure>
           </div>
           <div className="testimonials-controls">
