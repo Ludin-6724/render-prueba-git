@@ -13,7 +13,6 @@ import './scroll-morph-hero.css'
 
 const TOTAL_IMAGES = 20
 const ORIGINAL_MORPH_SPRING = { stiffness: 40, damping: 20 }
-const SOFT_SPRING = { stiffness: 32, damping: 24, mass: 0.7, restDelta: 0.001, restSpeed: 0.001 }
 const AUDIOVISUAL_START = 180
 const CAMERA_MOTION_START = 360
 const CAMERA_MOTION_END = 1260
@@ -50,6 +49,11 @@ const SCROLL_STEPS = [
   ...FEATURED_IMAGES.diseno.map((_, index) => DESIGN_START + 320 + index * 120),
   MAX_SCROLL,
 ].filter((point, index, points) => index === 0 || point > points[index - 1])
+// Phone: skip the empty dock-only beat and the long camera-only valley so the
+// first swipe lands on a composed act (title + camera/photos), not a clipped ring.
+const MOBILE_SCROLL_STEPS = SCROLL_STEPS.filter(point =>
+  point !== AUDIOVISUAL_START && point !== CAMERA_MOTION_END && point !== PHOTO_HANDOFF_START)
+const stepsForWidth = (width: number) => width < 768 ? MOBILE_SCROLL_STEPS : SCROLL_STEPS
 const IMG_WIDTH = 60
 const IMG_HEIGHT = 85
 const LOGO = '/brand/logo.svg'
@@ -190,7 +194,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   const virtualScroll = useMotionValue(0)
   const presentationScroll = useSpring(virtualScroll, ORIGINAL_MORPH_SPRING)
   const dockTarget = useTransform(presentationScroll, [0, 180], [0, 1])
-  const dock = useSpring(dockTarget, SOFT_SPRING)
+  const dock = useSpring(dockTarget, { stiffness: 90, damping: 22, restDelta: 0.001, restSpeed: 0.001 })
   const brandTime = useMotionValue(0)
   const inView = useRef(true)
   const hoveringPhoto = useRef(false)
@@ -252,6 +256,28 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   // One persistent copy block throughout each service, including the camera/photo handoff.
   const copyOpacity = useTransform(() => Math.min(1, Math.max(0, (dock.get() - 0.6) / 0.25)))
   const progress = useTransform(virtualScroll, [0, MAX_SCROLL], [0, 1])
+  const snapToIntro = () => {
+    if (scrollRef.current === 0 && virtualScroll.get() === 0) return
+    rewindAnimation.current?.stop()
+    rewinding.current = false
+    scrollRef.current = 0
+    virtualScroll.jump(0)
+    presentationScroll.jump(0)
+    dock.jump(0)
+    smoothMorph.jump(0)
+    smoothScrollRotate.jump(0)
+    brandTime.set(0)
+    setIdleAngle(0)
+    setAct(0)
+    setShowCamera(true)
+    setPhotoScroll(0)
+    containerRef.current?.removeAttribute('data-intro-replayed')
+    containerRef.current?.setAttribute('data-virtual-scroll', '0')
+    containerRef.current?.setAttribute('data-reentered-intro', 'true')
+    document.documentElement.classList.remove('morph-docked')
+  }
+  const snapToIntroRef = useRef(snapToIntro)
+  snapToIntroRef.current = snapToIntro
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration
@@ -336,7 +362,16 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     observer.observe(container)
     const visibility = new IntersectionObserver(([entry]) => { inView.current = entry.isIntersecting })
     visibility.observe(container)
-    return () => { observer.disconnect(); visibility.disconnect() }
+    const resetIfLeftBelow = () => {
+      const rect = container.getBoundingClientRect()
+      if (rect.bottom < -8) snapToIntroRef.current()
+    }
+    window.addEventListener('scroll', resetIfLeftBelow, { passive: true })
+    return () => {
+      observer.disconnect()
+      visibility.disconnect()
+      window.removeEventListener('scroll', resetIfLeftBelow)
+    }
   }, [])
 
   useEffect(() => {
@@ -345,6 +380,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       smoothScrollRotate.on('change', setRotateValue),
       smoothMouseX.on('change', setParallaxValue),
       ringOpacity.on('change', value => setRingInteractive(value > 0.5)),
+      dock.on('change', value => document.documentElement.classList.toggle('morph-docked', value > 0.85)),
       virtualScroll.on('change', value => { containerRef.current?.setAttribute('data-virtual-scroll', String(value)) }),
       presentationScroll.on('change', value => {
         setAct(value < AUDIOVISUAL_START ? 0 : value < MARKETING_START ? 1 : value < DESIGN_START ? 2 : 3)
@@ -387,7 +423,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
         // is reachable without a dead wheel/touch gesture.
         if (requested > MAX_SCROLL || requested < 0) {
           if (event.cancelable) event.preventDefault()
-          window.scrollBy({ top: requested > MAX_SCROLL ? container.clientHeight * 0.8 : -container.clientHeight * 0.8, behavior: 'smooth' })
+          window.scrollBy({ top: requested > MAX_SCROLL ? container.clientHeight * 0.8 : -container.clientHeight * 0.8, behavior: 'instant' })
         }
         return
       }
@@ -402,20 +438,26 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       }
     }
 
-    const nearestStep = (value: number) => SCROLL_STEPS.reduce((best, point, index) =>
-      Math.abs(point - value) < Math.abs(SCROLL_STEPS[best] - value) ? index : best, 0)
+    const steps = () => stepsForWidth(container.clientWidth)
+    const nearestStep = (value: number) => {
+      const points = steps()
+      return points.reduce((best, point, index) =>
+        Math.abs(point - value) < Math.abs(points[best] - value) ? index : best, 0)
+    }
     const moveOneStep = (direction: 1 | -1, event: Event, force = false) => {
       const rect = container.getBoundingClientRect()
       const canCapture = rect.top < window.innerHeight && rect.bottom > 0
+      if (!canCapture) return
       if (stepLocked.current || photoOpen) {
-        if (canCapture && event.cancelable) event.preventDefault()
+        if (event.cancelable) event.preventDefault()
         return
       }
-      if (canCapture && event.cancelable) event.preventDefault()
+      if (event.cancelable) event.preventDefault()
+      const points = steps()
       const current = scrollRef.current
       const index = nearestStep(current)
-      const targetIndex = Math.max(0, Math.min(SCROLL_STEPS.length - 1, index + direction))
-      const target = SCROLL_STEPS[targetIndex]
+      const targetIndex = Math.max(0, Math.min(points.length - 1, index + direction))
+      const target = points[targetIndex]
       if (target === current) {
         advance(direction > 0 ? MAX_SCROLL + 1 : -1, event, force)
         return
@@ -489,15 +531,23 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     }
   }, [virtualScroll, mouseX, photoOpen])
 
-  const copyTop = Math.min(128, Math.max(96, containerSize.height * 0.12))
-  const cameraTop = copyTop + copyHeight + 24
-  const cameraWidth = Math.min(containerSize.width * 0.88, 620, Math.max(0, containerSize.height - cameraTop - 60) * 16 / 9)
+  const narrowStage = containerSize.width < 768
+  const copyTop = narrowStage ? 88 : Math.min(128, Math.max(96, containerSize.height * 0.12))
+  const leftoverTop = copyTop + copyHeight + (narrowStage ? 12 : 24)
+  const leftoverBottom = containerSize.height - (narrowStage ? 72 : 40)
+  const leftover = Math.max(120, leftoverBottom - leftoverTop)
+  const cameraWidth = Math.min(
+    containerSize.width * (narrowStage ? 0.82 : 0.88),
+    narrowStage ? 320 : 620,
+    leftover * 16 / 9,
+  )
+  const cameraHeight = cameraWidth * 9 / 16
+  const cameraTop = leftoverTop + Math.max(0, (leftover - cameraHeight) / 2)
   const service = SERVICES[Math.max(0, act - 1)]
   const featuredImages = FEATURED_IMAGES[service.id as keyof typeof FEATURED_IMAGES]
   const photoStart = act === 1 ? PHOTO_HANDOFF_END : service.start + 320
   const photoStep = act === 1 ? 100 : 120
   const featuredIndex = Math.min(featuredImages.length - 1, Math.max(0, Math.floor((photoScroll - photoStart) / photoStep)))
-  const narrowStage = containerSize.width < 768
   const featuredAreaTop = copyTop + copyHeight + 20
   const featuredHeight = Math.max(100, Math.min(580, containerSize.height - featuredAreaTop - (narrowStage ? 84 : 32)))
   const featuredWidth = Math.min(narrowStage ? containerSize.width - 64 : Math.min(700, containerSize.width * 0.64), featuredHeight * 1.78)
@@ -513,7 +563,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       {SERVICES.map(service => <span key={service.id} id={service.id} className="morph-anchor" aria-hidden="true" />)}
       <p id="morph-instructions" className="sr-only">Desliza o usa las flechas para explorar Audiovisuales, Marketing digital y Diseño gráfico. Tab permite saltar la animación.</p>
       <a className="morph-skip" href="#after-scroll-morph">Saltar presentación</a>
-      {showCamera && <div className="morph-camera-stage" aria-hidden={act !== 1} style={{ top: cameraTop, width: cameraWidth, visibility: act === 1 ? 'visible' : 'hidden' }}><ScrollCamera scroll={presentationScroll} /></div>}
+      {showCamera && <div className="morph-camera-stage" aria-hidden={act !== 1} style={{ top: cameraTop, width: cameraWidth, height: cameraHeight, visibility: act === 1 ? 'visible' : 'hidden' }}><ScrollCamera scroll={presentationScroll} /></div>}
       {createPortal(<motion.div className="morph-brand-flight" style={{ left: logoLeft, top: logoTop, width: logoWidth, x: '-50%', y: '-50%' }}>
         <BrandIntro time={brandTime} dock={dock} lineOffset={introLineOffset} />
       </motion.div>, document.body)}
@@ -639,6 +689,7 @@ export default function ScrollMorphHero() {
     return () => {
       observer.disconnect()
       document.documentElement.classList.remove('morph-in-view')
+      document.documentElement.classList.remove('morph-docked')
     }
   }, [reducedMotion])
   return <>
