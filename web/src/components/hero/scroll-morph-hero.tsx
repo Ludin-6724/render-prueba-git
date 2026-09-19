@@ -34,6 +34,18 @@ const FEATURED_IMAGES = {
 const MARKETING_START = PHOTO_HANDOFF_END + FEATURED_IMAGES.audiovisuales.length * 100 + 80
 const DESIGN_START = MARKETING_START + 280 + FEATURED_IMAGES.marketing.length * 120 + 80
 const MAX_SCROLL = DESIGN_START + 280 + Math.max(320, FEATURED_IMAGES.diseno.length * 120)
+const MOBILE_STEPS = [
+  0,
+  AUDIOVISUAL_START + 40,
+  CAMERA_MOTION_START + 220,
+  PHOTO_HANDOFF_END,
+  ...FEATURED_IMAGES.audiovisuales.map((_, index) => PHOTO_HANDOFF_END + index * 100),
+  MARKETING_START + 40,
+  ...FEATURED_IMAGES.marketing.map((_, index) => MARKETING_START + 320 + index * 120),
+  DESIGN_START + 40,
+  ...FEATURED_IMAGES.diseno.map((_, index) => DESIGN_START + 320 + index * 120),
+  MAX_SCROLL,
+]
 const IMG_WIDTH = 60
 const IMG_HEIGHT = 85
 const LOGO = '/brand/logo.svg'
@@ -236,6 +248,22 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   const progress = useTransform(virtualScroll, [0, MAX_SCROLL], [0, 1])
 
   useEffect(() => {
+    const resetOnEntry = () => {
+      if (window.location.hash) return
+      rewindAnimation.current?.stop()
+      rewinding.current = false
+      scrollRef.current = 0
+      virtualScroll.set(0)
+      brandTime.set(0)
+      setIdleAngle(0)
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
+    resetOnEntry()
+    window.addEventListener('pageshow', resetOnEntry)
+    return () => window.removeEventListener('pageshow', resetOnEntry)
+  }, [brandTime, virtualScroll])
+
+  useEffect(() => {
     const link = document.querySelector<HTMLImageElement>('header img[src="/brand/logo.svg"]')?.closest('a')
     if (!link) return
     const restart = (event: MouseEvent) => {
@@ -319,8 +347,8 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     if (!container) return
     // Local virtual scroll, as in the original. Release the document at both ends.
     // Only capture when the section fills the area below the existing navigation.
-    const advance = (delta: number, event: Event) => {
-      if (photoOpen || !event.cancelable || delta === 0) return
+    const advance = (delta: number, event: Event, force = false) => {
+      if (photoOpen || (!event.cancelable && !force) || delta === 0) return
       if (event.target instanceof Element && event.target.closest('header, dialog, [role="dialog"], input, textarea, select')) return
       const rect = container.getBoundingClientRect()
       // Re-enter from below by spending the document distance first, identically
@@ -334,7 +362,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       const requested = scrollRef.current + movement
       const next = clamp(requested)
       if (next === scrollRef.current) return
-      event.preventDefault()
+      if (event.cancelable) event.preventDefault()
       rewindAnimation.current?.stop()
       rewinding.current = false
       window.scrollTo({ top: window.scrollY + rect.top, behavior: 'instant' })
@@ -348,22 +376,42 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     const handleWheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? container.clientHeight : 1
-      advance(event.deltaY * unit, event)
+      const delta = event.deltaY * unit
+      advance(Math.max(-260, Math.min(260, delta)), event)
     }
     let touchStartY = 0
     let touchStartX = 0
+    let touchMoved = false
     const handleTouchStart = (event: TouchEvent) => {
       touchStartY = event.touches[0].clientY
       touchStartX = event.touches[0].clientX
+      touchMoved = false
     }
     const handleTouchMove = (event: TouchEvent) => {
       if (event.touches.length !== 1) return
       const touch = event.touches[0]
-      const deltaY = touchStartY - touch.clientY
       const deltaX = touchStartX - touch.clientX
-      touchStartY = touch.clientY
-      touchStartX = touch.clientX
-      if (Math.abs(deltaY) >= Math.abs(deltaX)) advance(deltaY, event)
+      const deltaY = touchStartY - touch.clientY
+      if (Math.abs(deltaY) >= Math.abs(deltaX) && Math.abs(deltaY) > 12) {
+        touchMoved = true
+        event.preventDefault()
+      }
+    }
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (!touchMoved) return
+      const deltaY = touchStartY - (event.changedTouches[0]?.clientY ?? touchStartY)
+      if (Math.abs(deltaY) < 24) return
+      const current = scrollRef.current
+      const nearest = MOBILE_STEPS.reduce((best, point, index) => Math.abs(point - current) < Math.abs(MOBILE_STEPS[best] - current) ? index : best, 0)
+      const direction = deltaY > 0 ? 1 : -1
+      const targetIndex = Math.max(0, Math.min(MOBILE_STEPS.length - 1, nearest + direction))
+      const target = MOBILE_STEPS[targetIndex]
+      if (target === current) {
+        window.scrollBy({ top: direction > 0 ? container.clientHeight * .65 : -container.clientHeight * .65, behavior: 'smooth' })
+        return
+      }
+      advance(target - current, event, true)
+      touchMoved = false
     }
     const handleKey = (event: KeyboardEvent) => {
       if (event.target !== container || event.ctrlKey || event.metaKey || event.altKey) return
@@ -379,6 +427,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     window.addEventListener('wheel', handleWheel, { passive: false })
     window.addEventListener('touchstart', handleTouchStart, { passive: true })
     window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd, { passive: false })
     container.addEventListener('keydown', handleKey)
     container.addEventListener('mousemove', handleMouseMove)
     container.addEventListener('mouseleave', resetMouse)
@@ -386,6 +435,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       window.removeEventListener('wheel', handleWheel)
       window.removeEventListener('touchstart', handleTouchStart)
       window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
       container.removeEventListener('keydown', handleKey)
       container.removeEventListener('mousemove', handleMouseMove)
       container.removeEventListener('mouseleave', resetMouse)
