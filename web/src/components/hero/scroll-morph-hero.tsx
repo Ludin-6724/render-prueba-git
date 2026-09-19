@@ -248,19 +248,26 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   const progress = useTransform(virtualScroll, [0, MAX_SCROLL], [0, 1])
 
   useEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration
+    // The browser otherwise restores the previous scroll position after a
+    // reload, which makes the morph appear halfway through an act.
+    window.history.scrollRestoration = 'manual'
     const resetOnEntry = () => {
-      if (window.location.hash) return
       rewindAnimation.current?.stop()
       rewinding.current = false
       scrollRef.current = 0
       virtualScroll.set(0)
       brandTime.set(0)
       setIdleAngle(0)
-      window.scrollTo({ top: 0, behavior: 'instant' })
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }))
     }
     resetOnEntry()
     window.addEventListener('pageshow', resetOnEntry)
-    return () => window.removeEventListener('pageshow', resetOnEntry)
+    return () => {
+      window.removeEventListener('pageshow', resetOnEntry)
+      window.history.scrollRestoration = previousScrollRestoration
+    }
   }, [brandTime, virtualScroll])
 
   useEffect(() => {
