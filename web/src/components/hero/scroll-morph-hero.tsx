@@ -366,10 +366,18 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
       const rect = container.getBoundingClientRect()
       // Re-enter from below by spending the document distance first, identically
       // for wheel and touch. Never snap the last 100px back into the hero.
-      if (rect.top > 1) return
+      if (rect.top > 1) {
+        // If the hero is already visible, reclaim the gesture and pin it before
+        // advancing the virtual timeline. This closes the native-scroll leak
+        // that could send the page straight to the sections below.
+        if (rect.top >= window.innerHeight) return
+        if (event.cancelable) event.preventDefault()
+      }
       let movement = delta
       if (rect.top < -1) {
-        if (delta >= 0 || -delta < -rect.top) return
+        if (delta >= 0) {
+          if (event.cancelable) event.preventDefault()
+        } else if (-delta < -rect.top) return
         movement = delta - rect.top
       }
       const requested = scrollRef.current + movement
@@ -397,7 +405,13 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
     const nearestStep = (value: number) => SCROLL_STEPS.reduce((best, point, index) =>
       Math.abs(point - value) < Math.abs(SCROLL_STEPS[best] - value) ? index : best, 0)
     const moveOneStep = (direction: 1 | -1, event: Event, force = false) => {
-      if (stepLocked.current || photoOpen) return
+      const rect = container.getBoundingClientRect()
+      const canCapture = rect.top < window.innerHeight && rect.bottom > 0
+      if (stepLocked.current || photoOpen) {
+        if (canCapture && event.cancelable) event.preventDefault()
+        return
+      }
+      if (canCapture && event.cancelable) event.preventDefault()
       const current = scrollRef.current
       const index = nearestStep(current)
       const targetIndex = Math.max(0, Math.min(SCROLL_STEPS.length - 1, index + direction))
