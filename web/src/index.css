@@ -309,8 +309,9 @@ section[id] { scroll-margin-top: 6rem; }
 .testimonial-avatar-stack span.is-active { color: var(--ink); opacity: 1; box-shadow: 0 0 0 2px var(--amber); }
 .testimonial-motion-card .testimonials-quote { display: flex; align-items: center; min-height: 20rem; padding-top: 2rem; }
 .testimonial-motion-card .quote-in { width: 100%; }
-.testimonial-motion-card blockquote { max-width: 34ch; font-family: 'Archivo', sans-serif; font-size: clamp(1.35rem, 2.4vw, 2.15rem); font-weight: 400; line-height: 1.35; letter-spacing: -.025em; }
-.testimonial-split-text span { display: inline-block; }
+.testimonial-motion-card blockquote { max-width: 42ch; font-family: 'Archivo', sans-serif; font-size: clamp(1.35rem, 2.4vw, 2.15rem); font-weight: 400; line-height: 1.5; letter-spacing: .008em; white-space: normal; word-break: normal; overflow-wrap: normal; }
+.testimonial-split-text { white-space: normal; word-break: normal; overflow-wrap: normal; }
+.testimonial-split-text span { display: inline; }
 .testimonial-motion-card figcaption { display: flex; align-items: center; gap: 1rem; margin-top: 2.5rem; color: var(--ink); }
 .testimonial-author-mark { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 auto; border: 1px solid rgb(167 101 11 / .45); border-radius: 50%; color: #985408; font: 700 12px/1 'Archivo', sans-serif; letter-spacing: .05em; }
 .testimonial-motion-card figcaption strong { display: block; font-size: var(--type-body); font-weight: 700; }

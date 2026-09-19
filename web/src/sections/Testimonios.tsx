@@ -9,9 +9,11 @@ function initials(name: string | null) {
 }
 
 function SplitQuote({ text }: { text: string }) {
-  return <span className="testimonial-split-text">{text.split(' ').map((word, i) => (
-    <motion.span key={`${word}-${i}`} initial={{ opacity: 0, y: 18, filter: 'blur(7px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ duration: .38, delay: i * .018, ease: [0.22, 1, 0.36, 1] }}>{word}{' '}</motion.span>
-  ))}</span>
+  const words = text.split(/(\s+)/)
+  return <span className="testimonial-split-text">{words.map((word, i) => {
+    if (/^\s+$/.test(word)) return word
+    return <motion.span key={`${word}-${i}`} initial={{ opacity: 0, y: 18, filter: 'blur(7px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ duration: .38, delay: i * .012, ease: [0.22, 1, 0.36, 1] }}>{word}</motion.span>
+  })}</span>
 }
 
 export default function Testimonios() {
@@ -23,7 +25,7 @@ export default function Testimonios() {
   const cursorY = useSpring(useMotionValue(0), { damping: 25, stiffness: 150 })
 
   function go(dir: number) { setIndex((current) => (current + dir + testimonios.length) % testimonios.length) }
-  const autoplay = useCarouselAutoplay(carouselRef, () => go(1), false, 10000)
+  const autoplay = useCarouselAutoplay(carouselRef, () => go(1), false, 5500)
 
   function handleMouseMove(event: MouseEvent<HTMLDivElement>) {
     const rect = carouselRef.current?.getBoundingClientRect()
