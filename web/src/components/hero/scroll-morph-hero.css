@@ -57,7 +57,7 @@
 
 .morph-brand { position: relative; }
 .morph-isotype { position: absolute; height: 100%; width: auto; top: 0; left: 0; right: 0; margin-inline: auto; }
-.morph-editorial { position: relative; left: 50%; transform: translateX(-50%); width: max-content; margin-top: 1.25rem; text-align: center; white-space: nowrap; }
+.morph-editorial { position: relative; left: 50%; transform: translateX(-50%); width: min(90vw, 42rem); margin-top: 1.25rem; text-align: center; white-space: normal; }
 .morph-static > .morph-editorial { margin-bottom: 4rem; }
 
 /* Match the existing project caption in Nuestro trabajo; reuse its type tokens. */
@@ -67,14 +67,15 @@
 .morph-in-view .morph-brand-flight { visibility: visible; }
 .morph-brand-flight .morph-editorial { position: absolute; margin-top: 0; }
 .morph-copy-service { top: clamp(96px, 12svh, 128px); left: 5%; width: 90%; }
-.morph-editorial, .morph-copy-service .morph-sub { font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: calc(var(--type-body) + 1px); letter-spacing: normal; line-height: 1.6; }
+.morph-editorial { font-family: 'Archivo', system-ui, sans-serif; font-weight: 700; font-size: calc(var(--type-body) + 2px); letter-spacing: normal; line-height: 1.5; }
+.morph-copy-service .morph-sub { font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: calc(var(--type-body) + 1px); letter-spacing: normal; line-height: 1.6; }
 .morph-copy-service .morph-sub { display: block; max-width: 72ch; color: #505050; margin-top: 1rem; }
 .morph-copy-service .morph-tags { display: block; font-family: 'Archivo', system-ui, sans-serif; font-weight: 700; font-size: var(--type-body); color: #505050; letter-spacing: normal; line-height: 1.6; margin-top: 1.25rem; text-wrap: balance; }
 .morph-copy-service .morph-tags::before { display: none; }
 
 @media (max-width: 374px) {
-  .morph-editorial, .morph-copy-service .morph-sub { font-size: var(--type-body); }
-  .morph-editorial { letter-spacing: -.05em; }
+  .morph-copy-service .morph-sub { font-size: var(--type-body); }
+  .morph-editorial { font-size: calc(var(--type-body) + 1px); letter-spacing: -.04em; }
 }
 
 .morph-camera img, .morph-camera canvas { background: transparent; }

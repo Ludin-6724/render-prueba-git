@@ -24,7 +24,8 @@ function field(string $key): string
 }
 
 $nombre   = field('nombre');
-$empresa  = field('empresa');
+$empresa  = field('empresa'); // Optional for compatibility with the previous form.
+$telefono = field('telefono');
 $email    = field('email');
 $servicio = field('servicio');
 $mensaje  = isset($_POST['mensaje']) && is_string($_POST['mensaje'])
@@ -32,17 +33,21 @@ $mensaje  = isset($_POST['mensaje']) && is_string($_POST['mensaje'])
     : '';
 
 $permitidos = [
-    'Producción audiovisual',
+    'Audiovisuales',
+    'Producción audiovisual', // Accept submissions from an older cached page.
+    'Otro',
     'Diseño gráfico',
     'Marketing digital',
 ];
 
 if (
-    $nombre === '' || $empresa === '' || $mensaje === ''
+    $nombre === '' || $mensaje === ''
     || !filter_var($email, FILTER_VALIDATE_EMAIL)
     || !in_array($servicio, $permitidos, true)
     || strlen($nombre) > 120
     || strlen($empresa) > 160
+    || strlen($telefono) > 40
+    || strlen($email) > 254
     || strlen($mensaje) > 4000
 ) {
     header('Location: /contacto/?error=1', true, 303);
@@ -61,7 +66,8 @@ $asunto = 'Nueva cotización — ' . $servicio . ' — ' . $nombre;
 $cuerpo  = "Nuevo mensaje desde rendermultimedia.com\n";
 $cuerpo .= "------------------------------------------\n";
 $cuerpo .= 'Nombre:   ' . $nombre . "\n";
-$cuerpo .= 'Empresa:  ' . $empresa . "\n";
+if ($empresa !== '') $cuerpo .= 'Empresa:  ' . $empresa . "\n";
+if ($telefono !== '') $cuerpo .= 'Teléfono / WhatsApp: ' . $telefono . "\n";
 $cuerpo .= 'Email:    ' . $email . "\n";
 $cuerpo .= 'Servicio: ' . $servicio . "\n";
 $cuerpo .= "------------------------------------------\n";

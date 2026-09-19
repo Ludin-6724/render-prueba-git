@@ -21,14 +21,19 @@ const PHOTO_HANDOFF_START = 1380
 const PHOTO_HANDOFF_END = 1640
 const DESIGN_IMAGES = images.filter(image => image.service === 'diseno')
 const FEATURED_IMAGES = {
-  audiovisuales: images.filter(image => image.service === 'audiovisuales' && !/fondo/i.test(image.source)),
+  // Keep the fold ring dense, but make the audiovisual act a short, curated
+  // sequence so the handoff reaches Marketing without exhausting the scroll.
+  audiovisuales: [
+    ...images.filter(image => image.service === 'audiovisuales' && /Julio y Kenny/i.test(image.source)),
+    ...images.filter(image => image.service === 'audiovisuales' && !/fondo|Julio y Kenny/i.test(image.source)).slice(0, 7),
+  ],
   marketing: images.filter(image => image.service === 'marketing').sort((a, b) =>
     Number(b.src.endsWith('marketing-01.webp')) - Number(a.src.endsWith('marketing-01.webp'))),
   diseno: DESIGN_IMAGES.length === 1 ? Array.from({ length: 5 }, () => DESIGN_IMAGES[0]) : DESIGN_IMAGES,
 }
-const MARKETING_START = PHOTO_HANDOFF_END + FEATURED_IMAGES.audiovisuales.length * 120 + 120
-const DESIGN_START = MARKETING_START + 320 + FEATURED_IMAGES.marketing.length * 160 + 120
-const MAX_SCROLL = DESIGN_START + 320 + Math.max(400, FEATURED_IMAGES.diseno.length * 160)
+const MARKETING_START = PHOTO_HANDOFF_END + FEATURED_IMAGES.audiovisuales.length * 100 + 80
+const DESIGN_START = MARKETING_START + 280 + FEATURED_IMAGES.marketing.length * 120 + 80
+const MAX_SCROLL = DESIGN_START + 280 + Math.max(320, FEATURED_IMAGES.diseno.length * 120)
 const IMG_WIDTH = 60
 const IMG_HEIGHT = 85
 const LOGO = '/brand/logo.svg'
@@ -393,7 +398,7 @@ function AnimatedServices({ onPhotoOpen, photoOpen }: { onPhotoOpen: OpenMorphPh
   const service = SERVICES[Math.max(0, act - 1)]
   const featuredImages = FEATURED_IMAGES[service.id as keyof typeof FEATURED_IMAGES]
   const photoStart = act === 1 ? PHOTO_HANDOFF_END : service.start + 320
-  const photoStep = act === 1 ? 120 : 160
+  const photoStep = act === 1 ? 100 : 120
   const featuredIndex = Math.min(featuredImages.length - 1, Math.max(0, Math.floor((photoScroll - photoStart) / photoStep)))
   const narrowStage = containerSize.width < 768
   const featuredAreaTop = copyTop + copyHeight + 20

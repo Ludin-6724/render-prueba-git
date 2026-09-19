@@ -15,9 +15,10 @@ export const site = {
     'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6873.274070864329!2d-89.54506234344!3d14.797463791805844!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f62307d632a3cdf%3A0xb4639964843c7acd!2s10a%20Avenida%20440%2C%20Chiquimula%2C%20Guatemala!5e0!3m2!1ses-419!2sar!4v1730570302343!5m2!1ses-419!2sar',
   formAction: '/contacto.php',
   formServices: [
-    'Producción audiovisual',
-    'Diseño gráfico',
+    'Audiovisuales',
     'Marketing digital',
+    'Diseño gráfico',
+    'Otro',
   ],
 } as const
 
@@ -27,7 +28,7 @@ export const nav = [
   { label: 'PROCESO', href: '/#proceso' },
   { label: 'PORTAFOLIO', href: '/#trabajo' },
   { label: 'NOSOTROS', href: '/#nosotros' },
-  { label: 'CONTACTO', href: '/contacto/' },
+  { label: 'CONTACTO', href: '/#contacto' },
 ] as const
 
 export const servicios = [

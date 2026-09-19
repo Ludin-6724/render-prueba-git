@@ -11,7 +11,7 @@ export default function Servicios() {
       </header>
       <div className="services-list">
         {servicios.map((s) => (
-          <article key={s.n} className="service-row">
+          <article key={s.n} id={s.slug} className="service-row scroll-mt-24">
             <h3 className="type-project"><Link to="/servicios/">{s.titulo}<ArrowUpRight size={22} aria-hidden="true" /></Link></h3>
             <p className="type-body">{s.desc}</p>
             <ul className="service-tags" aria-label={`Áreas de ${s.titulo}`}>

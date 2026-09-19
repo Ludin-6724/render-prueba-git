@@ -86,7 +86,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-4">
             <Link
-              to="/contacto/"
+              to="/#contacto"
               className="hidden md:inline-flex min-h-11 items-center border border-[#0f0f0f] px-5 text-sm font-semibold hover:bg-[#0f0f0f] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f0f0f]"
             >
               Cotizar

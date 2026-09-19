@@ -1,0 +1,54 @@
+/* Acciones principales reutilizables */
+.btn-solid, .btn-line { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 48px; padding: 0 1.4rem; font-size: var(--type-meta); font-weight: 600; transition: background-color .18s, color .18s, border-color .18s; }
+.btn-solid { background: var(--night); color: var(--cream); }
+.btn-solid:hover { background: var(--amber); color: var(--night); }
+.btn-line { border: 1px solid var(--ink); color: var(--ink); background: transparent; }
+.btn-line:hover { background: var(--night); color: var(--cream); }
+
+/* Inicio: los tres servicios se reconocen en la primera pantalla. */
+.hero-home { min-height: 100svh; display: flex; background: var(--paper); }
+.hero-inner { flex: 1; display: flex; flex-direction: column; gap: clamp(1.25rem, 3vh, 2.25rem); padding-top: calc(5rem + clamp(1.5rem, 4.5vh, 3.25rem)); padding-bottom: var(--gutter); }
+.hero-head { display: grid; grid-template-columns: 1.45fr 1fr; gap: clamp(1.5rem, 4vw, 4rem); align-items: end; }
+.hero-title { font-family: 'Archivo Black', 'Archivo', sans-serif; font-size: clamp(2.5rem, 5.4vw, 5.25rem); line-height: 1.03; letter-spacing: -.035em; max-width: 15ch; }
+.hero-side { display: grid; gap: 1.5rem; justify-items: start; padding-bottom: .35rem; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.hero-panels { flex: 1; min-height: 280px; display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: .75rem; margin: 0; padding: 0; list-style: none; }
+.hero-panel-item { position: relative; display: flex; overflow: hidden; }
+.hero-panel { position: relative; flex: 1; display: flex; align-items: flex-end; padding: clamp(1rem, 2vw, 1.5rem); min-height: 220px; color: inherit; }
+.hero-panel-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease-out); }
+.hero-panel:hover .hero-panel-img { transform: scale(1.045); }
+.hero-panel:focus-visible { outline-offset: -4px; }
+.hero-panel-label { position: relative; z-index: 1; display: grid; gap: .4rem; }
+.hero-panel-name { font-family: 'Archivo Black', 'Archivo', sans-serif; font-size: var(--type-project); line-height: 1.12; letter-spacing: -.02em; }
+.hero-panel-meta { font-size: var(--type-meta); }
+.hero-panel-arrow { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 auto; border: 1px solid currentColor; border-radius: 50%; transition: transform .25s var(--ease-out), background-color .18s, color .18s, border-color .18s; }
+.hero-panel:hover .hero-panel-arrow { transform: translate(3px, -3px); }
+@media (hover: hover) and (min-width: 768px) {
+  .hero-panel-arrow { position: absolute; top: 1rem; right: 1rem; }
+}
+.hero-panel-av { color: var(--cream); }
+.hero-panel-av::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(11 11 11 / .72), rgb(11 11 11 / 0) 58%); }
+.hero-panel-av .hero-panel-meta { color: #e8ded2; }
+.hero-panel-mk { background: var(--night); color: var(--cream); }
+.hero-panel-mk .hero-panel-meta { color: #c7c0b8; }
+.hero-panel-mk .hero-panel-arrow:hover { background: var(--amber); color: var(--night); border-color: var(--amber); }
+.hero-panel-dg { background: var(--paper-warm); color: var(--ink); }
+.hero-panel-dg .hero-panel-meta { color: var(--muted-ink); }
+.hero-panel-dg::before { content: ''; position: absolute; right: -10%; bottom: -16%; width: 64%; aspect-ratio: 764 / 950; background: url('/brand/isotipo.svg') center / contain no-repeat; opacity: .1; }
+.hero-panel-dg .hero-panel-arrow:hover { background: var(--night); color: var(--cream); border-color: var(--night); }
+
+@media (max-width: 767px) {
+  .hero-panel-arrow { position: absolute; top: 1rem; right: 1rem; }
+  .hero-inner { gap: 1.25rem; padding-top: calc(5rem + 1.25rem); }
+  .hero-head { display: contents; }
+  .hero-title { order: 1; font-size: clamp(2.15rem, 8.6vw, 3.2rem); max-width: 17ch; }
+  .hero-panels { order: 2; grid-template-columns: 1fr; gap: .625rem; min-height: 0; flex: initial; }
+  .hero-side { order: 3; }
+  .hero-panel { min-height: 92px; align-items: center; padding: .9rem 1rem; }
+  .hero-panel-name { font-size: 1.05rem; }
+  .hero-panel-arrow { margin-left: auto; }
+  .hero-panel-av::after { background: rgb(11 11 11 / .48); }
+}
+
+/* Decorative layers must not intercept the three service links. */
+.hero-panel-av::after, .hero-panel-dg::before { pointer-events: none; }

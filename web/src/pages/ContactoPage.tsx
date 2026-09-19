@@ -11,9 +11,9 @@ export default function ContactoPage() {
   return (
     <main>
       <Contacto error={error} />
-      <section className="bg-[#0b0b0b] px-6 md:px-12 pb-24">
-        <p className="font-mono2 text-[10px] uppercase tracking-[0.3em] text-white/40 mb-4">Ubicación</p>
-        <div className="aspect-[16/9] w-full overflow-hidden border border-white/10">
+      <section className="bg-[#f7f4ee] px-6 md:px-12 pb-24">
+        <p className="font-mono2 text-[10px] uppercase tracking-[0.3em] text-[#65625c] mb-4">Ubicación</p>
+        <div className="aspect-[16/9] w-full overflow-hidden border border-[#ded9d0]">
           <iframe
             title="Mapa de RENDER Multimedia en Chiquimula"
             src={site.mapsEmbed}
