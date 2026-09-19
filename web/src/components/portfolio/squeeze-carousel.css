@@ -1,0 +1,25 @@
+.squeeze-carousel { display: flex; width: 100%; flex-direction: column; font-family: 'Archivo', system-ui, sans-serif; }
+.sq-controls { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; margin-bottom: 1rem; }
+.sq-counter { font-size: var(--type-meta); font-variant-numeric: tabular-nums; margin-right: .5rem; white-space: nowrap; }
+.sq-arrow { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; background: var(--sq-fill); color: var(--sq-on-fill); flex-shrink: 0; }
+.sq-viewport { width: 100%; overflow: hidden; }
+.sq-strip { display: flex; align-items: center; height: 100%; width: max-content; }
+.sq-panel { position: relative; isolation: isolate; height: 100%; flex-shrink: 0; cursor: pointer; overflow: hidden; background: #e7e3dc; padding: 0; }
+.squeeze-carousel :focus-visible { outline: 2px solid #0f0f0f; outline-offset: 3px; }
+.sq-panel:focus-visible { outline-offset: -4px; }
+.sq-panel-media { position: absolute; inset: -40px 0; }
+.sq-picture { position: absolute; top: 0; bottom: 0; left: 50%; height: 100%; max-width: none; transform: translateX(-50%); object-fit: cover; }
+.sq-poster-fallback { display: grid; place-items: center; }
+.sq-overlay { pointer-events: none; position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(transparent 50%, rgb(15 15 15 / .3)); }
+.sq-play { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--sq-fill); color: var(--sq-on-fill); }
+.sq-captions { margin: clamp(2.5rem, 4vw, 4rem) auto 0; display: grid; width: var(--sq-hero); max-width: 100%; }
+.sq-caption { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; text-align: center; }
+.sq-caption h4 { font-family: 'Archivo Black', 'Archivo', sans-serif; font-size: var(--type-project); line-height: 1.2; text-wrap: balance; max-width: 40ch; margin-inline: auto; }
+.sq-caption p { font-size: var(--type-body); line-height: 1.6; color: #505050; margin-top: .5rem; }
+.sq-action { display: inline-flex; flex-shrink: 0; align-items: center; gap: .75rem; min-height: 44px; padding: .7rem 1rem; border-radius: 12px; background: var(--sq-fill); color: var(--sq-on-fill); font-size: var(--type-body); font-weight: 600; }
+.sq-arrow:hover, .sq-action:hover { background: #ffc573; }
+@container (max-width: 640px) {
+  .sq-caption { flex-direction: column; gap: 1rem; }
+  .sq-controls { flex-wrap: wrap; }
+  .sq-play { width: 52px; height: 52px; }
+}
